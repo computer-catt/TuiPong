@@ -7,8 +7,30 @@
   "targets": {
     ".NETCoreApp,Version=v10.0": {
       "TuiPong/1.0.0": {
+        "dependencies": {
+          "TermiosLib": "2.0.1"
+        },
         "runtime": {
           "TuiPong.dll": {}
+        }
+      },
+      "CodingSeb.ExpressionEvaluator/1.4.37": {
+        "runtime": {
+          "lib/netstandard2.0/CodingSeb.ExpressionEvaluator.dll": {
+            "assemblyVersion": "1.4.37.0",
+            "fileVersion": "1.4.37.0"
+          }
+        }
+      },
+      "TermiosLib/2.0.1": {
+        "dependencies": {
+          "CodingSeb.ExpressionEvaluator": "1.4.37"
+        },
+        "runtime": {
+          "lib/net6.0/TermiosLib.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
         }
       }
     }
@@ -18,6 +40,20 @@
       "type": "project",
       "serviceable": false,
       "sha512": ""
+    },
+    "CodingSeb.ExpressionEvaluator/1.4.37": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-v0hYfOxW3XJyKQfy6bWMlDBD8ekdaHbS/Xxmm5nSyEjnA+yU5H3PM2tBb/qv6GN4EgcwPqB2nXMQO1YHPYx7Ww==",
+      "path": "codingseb.expressionevaluator/1.4.37",
+      "hashPath": "codingseb.expressionevaluator.1.4.37.nupkg.sha512"
+    },
+    "TermiosLib/2.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Q/ABSb8dp9BeW0nEoDibe1tbmpG70YljkwjHW9AVZ5Usoy2FNdvSsSsi3AZJeL214YDfuOMoh7k/T8Gyk7+kWQ==",
+      "path": "termioslib/2.0.1",
+      "hashPath": "termioslib.2.0.1.nupkg.sha512"
     }
   }
 }
