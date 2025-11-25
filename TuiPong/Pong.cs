@@ -8,28 +8,22 @@ public class Pong : ScreenHandler {
     Vector2 _ballPosition = new(-5, -5);
     Vector2 _ballVelocity = new(1, 0);
 
-    private const int PaddleHeight = 8;
+    private const int PaddleHeight = 5;
     private int _rPaddleY;
     private int _lPaddleY;
 
     protected override void Start() {
-        RefreshSpeed = 16;
+        RefreshSpeed = 0;
         _frameCounter = new();
         _frameCounter.StartCounter(2000);
     }
 
     private int ClampPaddleY(int position) => 
         Math.Clamp(position, (int)(-ScreenHeight / 2f + PaddleHeight / 2f + 1), (int)(ScreenHeight / 2f - PaddleHeight / 2f + 0.6f -1));
-    
-    protected override void Update() {
-        _frameCounter!.PushNewFrame();
-        DrawString((0,1), "TuiPong " + _frameCounter.GetFps(), DrawMode.Center);
 
+    protected override void Update() {
         _rPaddleY = ClampPaddleY(_rPaddleY);
         _lPaddleY = ClampPaddleY(_lPaddleY);
-        
-        for (int i = 0; i < ScreenHeight; i+=3)
-            ScreenText[i, ScreenWidth / 2] = '|';
         
         if (_ballPosition is { X: <= -3, Y: <= -3 }) 
             _ballPosition = new(ScreenWidth / 2f, ScreenHeight / 2f); // Runs once
@@ -48,6 +42,16 @@ public class Pong : ScreenHandler {
             _ballPosition.X > ScreenWidth - 4 && _ballPosition.X < ScreenWidth) // Reflect off paddle
             _ballVelocity = Vector2.Normalize(new Vector2(-6, -(_rPaddleY + Center.y - _ballPosition.Y)));
         
+        _ballPosition += _ballVelocity; // Apply physics
+    }
+
+    protected override void Render() {
+        _frameCounter!.PushNewFrame();
+        DrawString((0,1), "TuiPong " + _frameCounter.GetFps(), DrawMode.TopLeft);
+        
+        for (int i = 0; i < ScreenHeight; i+=3)
+            ScreenText[i, ScreenWidth / 2] = '|';
+        
         for (int i = -PaddleHeight/2; i < PaddleHeight/2; i++) 
             ScreenText[Center.y + i + _rPaddleY, ScreenWidth - 2] = '┃'; // Render paddle
         for (int i = -PaddleHeight/2; i < PaddleHeight/2; i++) 
@@ -55,8 +59,6 @@ public class Pong : ScreenHandler {
         
         if (ScreenText.IsInBounds((int)_ballPosition.X, (int)_ballPosition.Y)) 
             ScreenText[(int)_ballPosition.Y, (int)_ballPosition.X] = '⬤'; // Draw the ball while in bounds 
-
-        _ballPosition += _ballVelocity; // Apply physics
 
         if (_ballPosition.X > ScreenWidth + 5 || _ballPosition.X < -5) { // Game over overlay
             Console.ForegroundColor = ConsoleColor.Red;
@@ -70,7 +72,7 @@ public class Pong : ScreenHandler {
             ScreenText[ScreenHeight - 1, i] = '─';
         }
         
-        if (_ballPosition.X < ScreenWidth + 30 && _ballPosition.X > -30) return;// Reset
+        if (_ballPosition.X < ScreenWidth + 30 && _ballPosition.X > -30) return; // Reset
         _ballPosition = new (-5f, -5f);
         Console.ResetColor();
     }
