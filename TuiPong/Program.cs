@@ -2,9 +2,9 @@
 
 static class MainClass {
     public static void Main(string[] args) {
-        var game = new Wtest();
-        game.StartRendering();
+        var game = new Pong();
+        game.StartGame();
         game.EnterInputLoop();
-        game.StopRendering();
+        game.StopGame();
     }
 }

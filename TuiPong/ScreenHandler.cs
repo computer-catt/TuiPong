@@ -5,57 +5,67 @@ public abstract class ScreenHandler {
     protected int ScreenHeight;
     protected char[,] ScreenText = new char[1,1];
     protected int RefreshSpeed = 16; // 60 FPS ish
+    protected int UpdateSpeed = 16; // 60 FPS ish
     protected (int y, int x) Center;
     
     private bool _started;
 
-    public void StartRendering() {
-        if (!_started) _started = true;
-        else return;
-        _ = GameLoop();
+    public void StartGame() {
+        if (_started) return;
+        _started = true;
+        
+        new Thread(RenderLoop).Start();
+        new Thread(UpdateLoop).Start();
     }
 
     protected virtual void Start() {}
-    protected abstract void Update();
+    protected abstract void Render();
+    protected virtual void Update() {}
 
-    private char[,] _oldScreenText = new char[1,1];
-    private async Task GameLoop() {
+    private void UpdateLoop() {
+        while (_started) {
+            try {
+                if (ScreenWidth > 0 && ScreenHeight > 0) Update();
+                Thread.Sleep(UpdateSpeed);
+            }
+            catch (Exception e) {
+                Console.WriteLine(e);
+                Thread.Sleep(UpdateSpeed * 50);
+            }
+        }
+    }
+
+    private void RenderLoop() {
         Console.CursorVisible = false;
         Start();
         while (_started) {
             try {
+                bool didChange = ScreenHeight != Console.BufferHeight || ScreenWidth != Console.BufferHeight;
                 ScreenWidth = Console.BufferWidth;
                 ScreenHeight = Console.BufferHeight;
-                ScreenText = new char[ScreenHeight,  ScreenWidth];
+                if (didChange) ScreenText = new char[ScreenHeight,  ScreenWidth];
+                else for (int i = 0; i < ScreenHeight; i++)
+                        for (int j = 0; j < ScreenWidth; j++)
+                            ScreenText[i, j] = ' ';
+                
                 Center = (ScreenHeight / 2, ScreenWidth / 2);
                 
-                Update();
+                Render();
+                Thread.Sleep(RefreshSpeed);
                 
-                if (!_oldScreenText.ContentEquals(ScreenText)) {
-                    _oldScreenText = (char[,])ScreenText.Clone();
-                    var buffer = ScreenText.ToStringBuilder();
-                    Console.SetCursorPosition(0,0);
-                    _ = Console.Out.WriteAsync(buffer);
-                }
-                
-                await Task.Delay(RefreshSpeed);
+                var buffer = ScreenText.ToStringBuilder();
+                Console.SetCursorPosition(0,0);
+                Console.Write(buffer);
             }
             catch (Exception e) {
                 Console.WriteLine(e);
-                await Task.Delay(RefreshSpeed * 50);
+                Thread.Sleep(RefreshSpeed * 50);
             }
         }
     }
     
-    public void StopRendering() => _started = false;
+    public void StopGame() => _started = false;
 
-    public void DrawString((int x, int y) pos, string text, DrawMode drawMode) {
-        string[] lines;
-        string lineStr;
-        for (int line = 0; line < (lines = text.Split('\n')).Length; line++)
-            for (int charI = 0; charI < (lineStr = lines[line]).Length; charI++)
-                ScreenText[pos.y + line, pos.x + charI] = lineStr[charI];
-    }
 
     protected virtual void OnKeyRecieved(ConsoleKeyInfo key) {}
 
@@ -94,12 +104,34 @@ public abstract class ScreenHandler {
         this.currentTextCallback = currentTextCallback;
         this.finalString = finalString;
     }
+    public void DrawString((int x, int y) pos, string text, DrawMode drawMode = DrawMode.TopLeft) {
+        string[] lines;
+        string lineStr;
+        int y, x;
+        for (int line = 0; line < (lines = text.Split('\n')).Length; line++)
+        for (int charI = 0; charI < (lineStr = lines[line]).Length; charI++) {
+            switch (drawMode) {
+                case DrawMode.TopLeft:
+                    if (ScreenText.IsInBounds(x = pos.x + charI, y = pos.y + line)) 
+                        ScreenText[y, x] = lineStr[charI];
+                    break;
+                case DrawMode.Center:
+                    if (ScreenText.IsInBounds(x = pos.x + charI - lineStr.Length/2, y = pos.y + line - lines.Length/2)) 
+                        ScreenText[y, x] = lineStr[charI];
+                    break;
+                case DrawMode.TopRight:
+                    if (ScreenText.IsInBounds(x = pos.x - charI, y = pos.y + line))
+                        ScreenText[y, x] = lineStr[lineStr.Length - charI - 1];
+                    break;
+            }
+        }
+    }
     
     public enum DrawMode {
-        Center,
-        TopLeft,
-        TopRight,
-        BottomLeft,
-        BottomRight,
+        TopLeft,              TopRight,
+        
+                    Center,
+        
+        BottomLeft,         BottomRight,
     }
 }

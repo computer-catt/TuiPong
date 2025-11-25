@@ -7,7 +7,7 @@ public class Wtest : ScreenHandler {
     private string _screenText = "";
     private string _finalScreenText = "";
     
-    protected override void Update() {
+    protected override void Render() {
         if (ScreenText.IsInBounds(_x, _y)) ScreenText[_y, _x] = 'W';
         DrawString((Center.x, Center.y), _screenText, DrawMode.Center);
         DrawString((Center.x, 1 + Center.y), _finalScreenText, DrawMode.Center);
