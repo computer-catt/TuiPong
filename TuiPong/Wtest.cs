@@ -8,7 +8,8 @@ public class Wtest : ScreenHandler {
     private string _finalScreenText = "";
     
     protected override void Render() {
-        if (ScreenText.IsInBounds(_x, _y)) ScreenText[_y, _x] = 'W';
+        if (Extensions.IsInBounds(ScreenHeight, ScreenWidth, _x, _y)) DrawChar(_x, _y, 'W');
+        DrawString((Center.x, Center.y), $"{_x} {_y} {ResolveCharPos(_x, _y)}");
         DrawString((Center.x, Center.y), _screenText, DrawMode.Center);
         DrawString((Center.x, 1 + Center.y), _finalScreenText, DrawMode.Center);
     }
@@ -16,7 +17,7 @@ public class Wtest : ScreenHandler {
     public void MoveHorizontal(int meow) => _x += meow;
     public void MoveVertical(int meow) => _y += meow;
 
-    protected override void OnKeyRecieved(ConsoleKeyInfo keyInfo) {
+    protected override void OnKeyReceived(ConsoleKeyInfo keyInfo) {
         ConsoleKey key = keyInfo.Key;
         switch (key) {
             case ConsoleKey.W:

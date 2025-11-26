@@ -15,7 +15,7 @@ public class Pong : ScreenHandler {
     protected override void Start() {
         RefreshSpeed = 0;
         _frameCounter = new();
-        _frameCounter.StartCounter(2000);
+        _frameCounter.StartCounter(200);
     }
 
     private int ClampPaddleY(int position) => 
@@ -47,29 +47,29 @@ public class Pong : ScreenHandler {
 
     protected override void Render() {
         _frameCounter!.PushNewFrame();
-        DrawString((0,1), "TuiPong " + _frameCounter.GetFps(), DrawMode.TopLeft);
+        DrawString((0,1), "TuiPong " + _frameCounter.GetFps());
         
         for (int i = 0; i < ScreenHeight; i+=3)
-            ScreenText[i, ScreenWidth / 2] = '|';
+            DrawChar(Center.x, i, '|');
         
         for (int i = -PaddleHeight/2; i < PaddleHeight/2; i++) 
-            ScreenText[Center.y + i + _rPaddleY, ScreenWidth - 2] = '┃'; // Render paddle
+            DrawChar(ScreenWidth - 2, Center.y + i + _rPaddleY, '┃'); // Render paddle
         for (int i = -PaddleHeight/2; i < PaddleHeight/2; i++) 
-            ScreenText[Center.y + i + _lPaddleY, 1] = '┃'; // Render paddle
+            DrawChar(1, Center.y + i + _lPaddleY, '┃'); // Render paddle
         
-        if (ScreenText.IsInBounds((int)_ballPosition.X, (int)_ballPosition.Y)) 
-            ScreenText[(int)_ballPosition.Y, (int)_ballPosition.X] = '⬤'; // Draw the ball while in bounds 
+        if (Extensions.IsInBounds(ScreenHeight, ScreenWidth, (int)_ballPosition.X, (int)_ballPosition.Y)) 
+            DrawChar((int)_ballPosition.X, (int)_ballPosition.Y, '⬤'); // Draw the ball while in bounds 
 
         if (_ballPosition.X > ScreenWidth + 5 || _ballPosition.X < -5) { // Game over overlay
             Console.ForegroundColor = ConsoleColor.Red;
             char[] letters = ['G','a','m','e',' ','o','v','e','r'];
             for (int i = 0; i < letters.Length; i++)
-                ScreenText[ScreenHeight / 2, ScreenWidth/2 - letters.Length/2 + i] = letters[i];
+                DrawChar(Center.x - letters.Length/2 + i, Center.y, letters[i]);
         }
 
         for (int i = 0; i < ScreenWidth; i++) {
-            ScreenText[0, i] = '─';
-            ScreenText[ScreenHeight - 1, i] = '─';
+            DrawChar(i, 0, '─');
+            DrawChar(i, ScreenHeight - 1, '─');
         }
         
         if (_ballPosition.X < ScreenWidth + 30 && _ballPosition.X > -30) return; // Reset
@@ -84,7 +84,7 @@ public class Pong : ScreenHandler {
     public void LeftPaddleDown() => _lPaddleY--;
 
 
-    protected override void OnKeyRecieved(ConsoleKeyInfo keyInfo) {
+    protected override void OnKeyReceived(ConsoleKeyInfo keyInfo) {
         ConsoleKey key = keyInfo.Key;
         switch (key) {
             case ConsoleKey.UpArrow:
