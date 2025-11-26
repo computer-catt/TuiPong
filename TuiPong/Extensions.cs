@@ -12,6 +12,16 @@ public static class Extensions {
         return true;
     }
     
+    public static StringBuilder ToStringBuilder(this char[] baseArray) {
+        StringBuilder builder = new(baseArray.Length);
+        for (int i = 0; i < baseArray.Length; i++) {
+            builder.Append(baseArray[i] == 0 ? ' ' : baseArray[i]);
+            /*if (i != baseArray.GetLength(0) -1)
+                builder.AppendLine();*/ // isn't technically required
+        }
+        return builder;
+    }
+
     public static StringBuilder ToStringBuilder(this char[,] baseArray) {
         StringBuilder builder = new(baseArray.GetLength(0) * baseArray.GetLength(1));
         for (int i = 0; i < baseArray.GetLength(0); i++) {
@@ -22,12 +32,15 @@ public static class Extensions {
         }
         return builder;
     }
-    
-    public static bool IsInBounds<T>(this T[,] array, int x, int y){
+
+    public static bool IsInBounds(int height, int width, int x, int y) {
         if (x < 0) return false;
         if (y < 0) return false;
-        if (y >= array.GetLength(0)) return false;
-        if (x >= array.GetLength(1)) return false;
+        if (y >= height) return false;
+        if (x >= width) return false;
         return true;
     }
+
+    public static bool IsInBounds<T>(this T[,] array, int x, int y) => 
+        IsInBounds(array.GetLength(0), array.GetLength(1), x, y);
 }

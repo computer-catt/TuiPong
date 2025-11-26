@@ -3,7 +3,7 @@ namespace TuiPong;
 public abstract class ScreenHandler {
     protected int ScreenWidth;
     protected int ScreenHeight;
-    protected char[,] ScreenText = new char[1,1];
+    protected char[] ScreenText = new char[1];
     protected int RefreshSpeed = 16; // 60 FPS ish
     protected int UpdateSpeed = 16; // 60 FPS ish
     protected (int y, int x) Center;
@@ -35,26 +35,28 @@ public abstract class ScreenHandler {
         }
     }
 
+    public int ResolveCharPos(int x, int y) => y * ScreenWidth + x;
+    protected void DrawChar(int x, int y, char ch) => ScreenText[ResolveCharPos(x,y)] = ch;
+    
     private void RenderLoop() {
         Console.CursorVisible = false;
         Start();
         while (_started) {
             try {
-                bool didChange = ScreenHeight != Console.BufferHeight || ScreenWidth != Console.BufferHeight;
-                ScreenWidth = Console.BufferWidth;
-                ScreenHeight = Console.BufferHeight;
-                if (didChange) ScreenText = new char[ScreenHeight,  ScreenWidth];
-                else for (int i = 0; i < ScreenHeight; i++)
-                        for (int j = 0; j < ScreenWidth; j++)
-                            ScreenText[i, j] = ' ';
-                
-                Center = (ScreenHeight / 2, ScreenWidth / 2);
+                bool didChange = ScreenHeight != Console.BufferHeight || ScreenWidth != Console.BufferWidth;
+                if (didChange) {
+                    ScreenWidth = Console.BufferWidth;
+                    ScreenHeight = Console.BufferHeight;
+                    ScreenText = new char[ScreenHeight * ScreenWidth];
+                    Center = (ScreenHeight / 2, ScreenWidth / 2);
+                }
+                else Array.Clear(ScreenText);
                 
                 Render();
                 Thread.Sleep(RefreshSpeed);
                 
                 var buffer = ScreenText.ToStringBuilder();
-                Console.SetCursorPosition(0,0);
+                Console.Write("\e[H");
                 Console.Write(buffer);
             }
             catch (Exception e) {
@@ -67,7 +69,7 @@ public abstract class ScreenHandler {
     public void StopGame() => _started = false;
 
 
-    protected virtual void OnKeyRecieved(ConsoleKeyInfo key) {}
+    protected virtual void OnKeyReceived(ConsoleKeyInfo key) {}
 
     private string _currentInput;
     private Action<string>? currentTextCallback;
@@ -92,7 +94,7 @@ public abstract class ScreenHandler {
                     _currentInput = "";
                     continue;
                 }
-                OnKeyRecieved(keyInfo);
+                OnKeyReceived(keyInfo);
             }
             catch (Exception e) {
                 Console.WriteLine(e);
@@ -104,27 +106,53 @@ public abstract class ScreenHandler {
         this.currentTextCallback = currentTextCallback;
         this.finalString = finalString;
     }
-    public void DrawString((int x, int y) pos, string text, DrawMode drawMode = DrawMode.TopLeft) {
+
+    private void ParseFullDrawString((int x, int y) pos, string text, DrawMode drawMode = DrawMode.Center) {
         string[] lines;
         string lineStr;
         int y, x;
         for (int line = 0; line < (lines = text.Split('\n')).Length; line++)
-        for (int charI = 0; charI < (lineStr = lines[line]).Length; charI++) {
+        for (int charI = 0; charI < (lineStr = lines[line]).Length; charI++)
             switch (drawMode) {
-                case DrawMode.TopLeft:
-                    if (ScreenText.IsInBounds(x = pos.x + charI, y = pos.y + line)) 
-                        ScreenText[y, x] = lineStr[charI];
-                    break;
                 case DrawMode.Center:
-                    if (ScreenText.IsInBounds(x = pos.x + charI - lineStr.Length/2, y = pos.y + line - lines.Length/2)) 
-                        ScreenText[y, x] = lineStr[charI];
+                    if (Extensions.IsInBounds(ScreenHeight, ScreenWidth, x = pos.x + charI - lineStr.Length / 2, y = pos.y + line - lines.Length / 2))
+                        DrawChar(x, y, lineStr[charI]);
                     break;
                 case DrawMode.TopRight:
-                    if (ScreenText.IsInBounds(x = pos.x - charI, y = pos.y + line))
-                        ScreenText[y, x] = lineStr[lineStr.Length - charI - 1];
+                    if (Extensions.IsInBounds(ScreenHeight, ScreenWidth, x = pos.x - charI - 1, y = pos.y + line))
+                        DrawChar(x, y, lineStr[lineStr.Length - charI - 1]);
+                    break;
+                case DrawMode.BottomRight:
+                    if (Extensions.IsInBounds(ScreenHeight, ScreenWidth, x = pos.x - charI - 1, y = pos.y + line - lines.Length))
+                        DrawChar(x, y, lineStr[lineStr.Length - charI - 1]);
                     break;
             }
+    }
+
+    private void ParseLessDrawString((int x, int y) pos, string text, DrawMode drawMode = DrawMode.TopLeft) {
+        int y, x, charPos = 0, line = 0;
+        for (int charI = 0; charI < text.Length; charI++) {
+            if (text[charI] == '\n') { line++; charPos = 0; }
+
+            switch (drawMode) {
+                case DrawMode.TopLeft:
+                    if (Extensions.IsInBounds(ScreenHeight, ScreenWidth, x = pos.x + charPos, y = pos.y + line)) 
+                        DrawChar(x, y, text[charI]);
+                    break;
+                case DrawMode.BottomLeft:
+                    int lines = text.Count('\n') + 1;
+                    if (Extensions.IsInBounds(ScreenHeight, ScreenWidth, x = pos.x + charPos, y = pos.y + line - lines)) 
+                        DrawChar(x, y, text[charI]);
+                    break;
+            }
+
+            charPos++;
         }
+    }
+
+    public void DrawString((int x, int y) pos, string text, DrawMode drawMode = DrawMode.TopLeft) {
+        if (drawMode is DrawMode.TopLeft or DrawMode.BottomLeft) { ParseLessDrawString(pos, text, drawMode); return;}
+        ParseFullDrawString(pos, text, drawMode);
     }
     
     public enum DrawMode {

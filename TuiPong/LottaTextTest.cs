@@ -14,15 +14,19 @@ public class LottaTextTest : ScreenHandler {
     }
 
     protected override void Render() {
-        DrawString((Center.x, Center.y), _revealedString, DrawMode.TopRight);
+        DrawString((Center.x, Center.y), _revealedString, DrawMode.Center);
+        DrawString((0,0), "This text is in the top left");
+        DrawString((ScreenWidth, 0), "This text is in the top right", DrawMode.TopRight);
+        DrawString((ScreenWidth, ScreenHeight), "This text is in the bottom right", DrawMode.BottomRight);
+        DrawString((0, ScreenHeight), "This text is in the bottom left", DrawMode.BottomLeft);
     }
     
-    protected override void OnKeyRecieved(ConsoleKeyInfo keyInfo) {
+    protected override void OnKeyReceived(ConsoleKeyInfo keyInfo) {
         ConsoleKey key = keyInfo.Key;
         switch (key) {
             case ConsoleKey.A:
                 _screenText +=
-                    "This is a lot of text, it may even contain cats or peanuts, so be careful as you're eating it\nIm a cat writing a lot of text\nMeow mewoemwoemowemoewmoemowmoewmoewomweio keom we moewm owemoq mow emoew mow emo emowmowe moew mowemo\n";
+                    "This is a lot of text, it may even contain cats or peanuts, so be careful as you're eating it\nIm a cat writing a lot of text\nMeow mewoemwoemowemoewmoemowmoewmoewomweio keom we moewm owemoq mow emoew mow emo emowmowe moew mowemo";
                 break;
         }
     }
