@@ -1,31 +1,43 @@
 namespace TuiPong;
 
-public abstract class ScreenHandler {
-    protected int ScreenWidth;
-    protected int ScreenHeight;
-    protected char[] ScreenText = new char[1];
-    protected int RefreshSpeed = 16; // 60 FPS ish
-    protected int UpdateSpeed = 16; // 60 FPS ish
-    protected (int y, int x) Center;
+public abstract class ScreenBase {
+    public abstract void UpdateScreenBounds();
+    public abstract void PushDisplay(object value);
+    
+    private TuiApplication _application;
+    
+    public void SetApplication(TuiApplication application) {
+        _application = application;
+        _application.Start();
+    }
+    
+    protected internal int ScreenWidth;
+    protected internal int ScreenHeight;
+    protected internal char[] ScreenText = new char[1];
+    protected internal int RefreshSpeed = 16; // 60 FPS ish
+    protected internal int UpdateSpeed = 16; // 60 FPS ish
+    protected internal (int y, int x) Center;
     
     private bool _started;
-
+    
     public void StartGame() {
         if (_started) return;
         _started = true;
-        
-        new Thread(RenderLoop).Start();
-        new Thread(UpdateLoop).Start();
-    }
 
-    protected virtual void Start() {}
-    protected abstract void Render();
-    protected virtual void Update() {}
+        try {
+            new Thread(RenderLoop).Start();
+            new Thread(UpdateLoop).Start();
+        }
+        catch (PlatformNotSupportedException) {
+            _ = AsyncUpdateLoop();
+            _ = AsyncRenderLoop();
+        }
+    }
 
     private void UpdateLoop() {
         while (_started) {
             try {
-                if (ScreenWidth > 0 && ScreenHeight > 0) Update();
+                if (ScreenWidth > 0 && ScreenHeight > 0) _application.Update();
                 Thread.Sleep(UpdateSpeed);
             }
             catch (Exception e) {
@@ -34,30 +46,28 @@ public abstract class ScreenHandler {
             }
         }
     }
-
-    public int ResolveCharPos(int x, int y) => y * ScreenWidth + x;
-    protected void DrawChar(int x, int y, char ch) => ScreenText[ResolveCharPos(x,y)] = ch;
     
-    private void RenderLoop() {
-        Console.CursorVisible = false;
-        Start();
+    private async Task AsyncUpdateLoop() {
         while (_started) {
             try {
-                bool didChange = ScreenHeight != Console.BufferHeight || ScreenWidth != Console.BufferWidth;
-                if (didChange) {
-                    ScreenWidth = Console.BufferWidth;
-                    ScreenHeight = Console.BufferHeight;
-                    ScreenText = new char[ScreenHeight * ScreenWidth];
-                    Center = (ScreenHeight / 2, ScreenWidth / 2);
-                }
-                else Array.Clear(ScreenText);
-                
-                Render();
+                if (ScreenWidth > 0 && ScreenHeight > 0) _application.Update();
+                await Task.Delay(UpdateSpeed);
+            }
+            catch (Exception e) {
+                Console.WriteLine(e);
+                await Task.Delay(UpdateSpeed * 50);
+            }
+        }
+    }
+
+    public int ResolveCharPos(int x, int y) => y * ScreenWidth + x;
+    protected internal void DrawChar(int x, int y, char ch) => ScreenText[ResolveCharPos(x,y)] = ch;
+    
+    private void RenderLoop() {
+        while (_started) {
+            try {
+                RenderIteration();
                 Thread.Sleep(RefreshSpeed);
-                
-                var buffer = ScreenText.ToStringBuilder();
-                Console.Write("\e[H");
-                Console.Write(buffer);
             }
             catch (Exception e) {
                 Console.WriteLine(e);
@@ -65,11 +75,26 @@ public abstract class ScreenHandler {
             }
         }
     }
+    private async Task AsyncRenderLoop() {
+        while (_started) {
+            try {
+                RenderIteration();
+                await Task.Delay(RefreshSpeed);
+            }
+            catch (Exception e) {
+                Console.WriteLine(e);
+                await Task.Delay(RefreshSpeed * 50);
+            }
+        }
+    }
+
+    protected virtual void RenderIteration() {
+        UpdateScreenBounds();
+        _application.Render();
+        PushDisplay(ScreenText.ToStringBuilder(ScreenWidth, ScreenHeight));
+    }
     
     public void StopGame() => _started = false;
-
-
-    protected virtual void OnKeyReceived(ConsoleKeyInfo key) {}
 
     private string _currentInput;
     private Action<string>? currentTextCallback;
@@ -94,7 +119,7 @@ public abstract class ScreenHandler {
                     _currentInput = "";
                     continue;
                 }
-                OnKeyReceived(keyInfo);
+                _application.OnKeyReceived(keyInfo);
             }
             catch (Exception e) {
                 Console.WriteLine(e);
@@ -102,7 +127,7 @@ public abstract class ScreenHandler {
         }
     }
 
-    protected void GetUserInput(Action<string> currentTextCallback, Action<string> finalString) {
+    protected internal void GetUserInput(Action<string> currentTextCallback, Action<string> finalString) {
         this.currentTextCallback = currentTextCallback;
         this.finalString = finalString;
     }

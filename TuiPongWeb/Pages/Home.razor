@@ -1,0 +1,56 @@
+﻿@inject IJSRuntime JavascriptRuntime
+@page "/"
+@using TuiPong
+
+<PageTitle>Home</PageTitle>
+
+<div tabindex="0" style="color: white;">
+    <div style="color: white; white-space: pre-wrap; font-family: monospace">@_screenText</div>
+</div>
+
+@code {
+    WebScreen? _webScreen;
+    private string _screenText = "";
+    private PixelSize _characterSize;
+    private int _horizontalCharacters;
+    private int _verticalCharacters;
+    
+    protected override async void OnInitialized() {
+        _webScreen = new WebScreen(s => {
+            _screenText = s;
+            StateHasChanged();
+        });
+        
+        await UpdateSize();
+        _webScreen.SetScreenBounds(_horizontalCharacters, _verticalCharacters);
+        TuiApplication game = new Pong(_webScreen);
+        _webScreen.SetApplication(game);
+        _webScreen.StartGame();
+        _ = ScreenCheckLoop();
+
+    }
+
+    private async Task ScreenCheckLoop() {
+        while (true) {
+            await UpdateSize();
+            _webScreen.SetScreenBounds(_horizontalCharacters, _verticalCharacters);
+            await Task.Delay(100);
+        }
+    }
+    
+    private async Task UpdateSize() {
+        _characterSize = await JavascriptRuntime.InvokeAsync<PixelSize>("measureCharacter");
+        var viewportSize = await JavascriptRuntime.InvokeAsync<PixelSize>("getViewportSize");
+        _horizontalCharacters = (int)(viewportSize.Width / (_characterSize.Width / 7f));
+        _verticalCharacters = viewportSize.Height / _characterSize.Height;
+    }
+    
+    /*private void HandleKey(KeyboardEventArgs args) {
+        
+    }*/
+    
+    public class PixelSize {
+        public int Width { get; set; }
+        public int Height { get; set; }
+    }
+}
