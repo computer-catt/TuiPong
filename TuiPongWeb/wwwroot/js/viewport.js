@@ -1,0 +1,1 @@
+window.getViewportSize = () => ({ width: innerWidth, height: innerHeight });

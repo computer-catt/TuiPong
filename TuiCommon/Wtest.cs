@@ -1,23 +1,25 @@
+using static TuiPong.ScreenBase;
+
 namespace TuiPong;
 
-public class Wtest : ScreenHandler {
+public class Wtest(ScreenBase screenBase) : TuiApplication(screenBase) {
     private int _x = 5;
     private int _y = 5;
 
     private string _screenText = "";
     private string _finalScreenText = "";
     
-    protected override void Render() {
-        if (Extensions.IsInBounds(ScreenHeight, ScreenWidth, _x, _y)) DrawChar(_x, _y, 'W');
-        DrawString((Center.x, Center.y), $"{_x} {_y} {ResolveCharPos(_x, _y)}");
-        DrawString((Center.x, Center.y), _screenText, DrawMode.Center);
-        DrawString((Center.x, 1 + Center.y), _finalScreenText, DrawMode.Center);
+    protected internal override void Render() {
+        if (Extensions.IsInBounds(Sb.ScreenHeight, Sb.ScreenWidth, _x, _y)) Sb.DrawChar(_x, _y, 'W');
+        Sb.DrawString((Sb.Center.x, Sb.Center.y), $"{_x} {_y} {Sb.ResolveCharPos(_x, _y)}");
+        Sb.DrawString((Sb.Center.x, Sb.Center.y), _screenText, DrawMode.Center);
+        Sb.DrawString((Sb.Center.x, 1 + Sb.Center.y), _finalScreenText, DrawMode.Center);
     }
 
     public void MoveHorizontal(int meow) => _x += meow;
     public void MoveVertical(int meow) => _y += meow;
 
-    protected override void OnKeyReceived(ConsoleKeyInfo keyInfo) {
+    protected internal override void OnKeyReceived(ConsoleKeyInfo keyInfo) {
         ConsoleKey key = keyInfo.Key;
         switch (key) {
             case ConsoleKey.W:
@@ -33,7 +35,7 @@ public class Wtest : ScreenHandler {
                 MoveHorizontal(1);
                 break;
             case ConsoleKey.F:
-                GetUserInput(text => _screenText = text, finalText => _finalScreenText = finalText);
+                Sb.GetUserInput(text => _screenText = text, finalText => _finalScreenText = finalText);
                 break;
         }
     }

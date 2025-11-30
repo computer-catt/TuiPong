@@ -1,11 +1,30 @@
 {
   "version": 3,
   "targets": {
-    "net10.0": {}
+    "net10.0": {
+      "TuiCommon/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "compile": {
+          "bin/placeholder/TuiCommon.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/TuiCommon.dll": {}
+        }
+      }
+    }
   },
-  "libraries": {},
+  "libraries": {
+    "TuiCommon/1.0.0": {
+      "type": "project",
+      "path": "../TuiCommon/TuiCommon.csproj",
+      "msbuildProject": "../TuiCommon/TuiCommon.csproj"
+    }
+  },
   "projectFileDependencyGroups": {
-    "net10.0": []
+    "net10.0": [
+      "TuiCommon >= 1.0.0"
+    ]
   },
   "packageFolders": {
     "/home/ComputerCat/.nuget/packages/": {}
@@ -26,12 +45,17 @@
         "net10.0"
       ],
       "sources": {
+        "/home/ComputerCat/.dotnet/library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net10.0": {
           "targetAlias": "net10.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "/home/ComputerCat/RiderProjects/TuiPong/TuiCommon/TuiCommon.csproj": {
+              "projectPath": "/home/ComputerCat/RiderProjects/TuiPong/TuiCommon/TuiCommon.csproj"
+            }
+          }
         }
       },
       "warningProperties": {

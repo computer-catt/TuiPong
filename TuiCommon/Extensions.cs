@@ -12,6 +12,16 @@ public static class Extensions {
         return true;
     }
     
+    public static StringBuilder ToStringBuilder(this char[] baseArray, int width, int height) {
+        StringBuilder builder = new(baseArray.Length + height - 1);
+        for (int i = 0; i < baseArray.Length; i++) {
+            builder.Append(baseArray[i] == 0 ? ' ' : baseArray[i]);
+            if (i < baseArray.Length - width && (i+1) % width == 0) 
+                builder.AppendLine();
+        }
+        return builder;
+    }
+    
     public static StringBuilder ToStringBuilder(this char[] baseArray) {
         StringBuilder builder = new(baseArray.Length);
         for (int i = 0; i < baseArray.Length; i++) {

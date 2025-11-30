@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TuiPong")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f06860ee4e8cd935b161db2a04f01a62b579e865")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+93b2be3378ada97499f93569f484cc7b10b72df6")]
 [assembly: System.Reflection.AssemblyProductAttribute("TuiPong")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TuiPong")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
