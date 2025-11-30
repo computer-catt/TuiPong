@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace TuiPong;
+namespace TuiCommon;
 
 public static class Extensions {
     public static bool ContentEquals<T>(this T[,] baseArray, T[,] b) {
@@ -14,21 +14,18 @@ public static class Extensions {
     
     public static StringBuilder ToStringBuilder(this char[] baseArray, int width, int height) {
         StringBuilder builder = new(baseArray.Length + height - 1);
-        for (int i = 0; i < baseArray.Length; i++) {
+        for (int lineindex = 0, i = 0; i < baseArray.Length; i++) {
             builder.Append(baseArray[i] == 0 ? ' ' : baseArray[i]);
-            if (i < baseArray.Length - width && (i+1) % width == 0) 
-                builder.AppendLine();
+            if (lineindex++ + 1 == width && i < baseArray.Length - 1 && (lineindex=0) == 0)
+                builder.Append('\n');
         }
         return builder;
     }
     
     public static StringBuilder ToStringBuilder(this char[] baseArray) {
         StringBuilder builder = new(baseArray.Length);
-        for (int i = 0; i < baseArray.Length; i++) {
+        for (int i = 0; i < baseArray.Length; i++)
             builder.Append(baseArray[i] == 0 ? ' ' : baseArray[i]);
-            /*if (i != baseArray.GetLength(0) -1)
-                builder.AppendLine();*/ // isn't technically required
-        }
         return builder;
     }
 
@@ -37,8 +34,8 @@ public static class Extensions {
         for (int i = 0; i < baseArray.GetLength(0); i++) {
             for (int j = 0; j < baseArray.GetLength(1); j++)
                 builder.Append(baseArray[i, j] == 0 ? ' ' : baseArray[i, j]);
-            if (i != baseArray.GetLength(0) -1)
-                builder.AppendLine(); // isn't technically required
+            if (i != baseArray.GetLength(0) - 1)
+                builder.Append('\n'); // isn't technically required
         }
         return builder;
     }

@@ -1,6 +1,6 @@
-using static TuiPong.ScreenBase;
+using static TuiCommon.ScreenBase;
 
-namespace TuiPong;
+namespace TuiCommon.Applications;
 
 public class Wtest(ScreenBase screenBase) : TuiApplication(screenBase) {
     private int _x = 5;
@@ -19,7 +19,7 @@ public class Wtest(ScreenBase screenBase) : TuiApplication(screenBase) {
     public void MoveHorizontal(int meow) => _x += meow;
     public void MoveVertical(int meow) => _y += meow;
 
-    protected internal override void OnKeyReceived(ConsoleKeyInfo keyInfo) {
+    protected internal void OnKeyReceived(ConsoleKeyInfo keyInfo) {
         ConsoleKey key = keyInfo.Key;
         switch (key) {
             case ConsoleKey.W:

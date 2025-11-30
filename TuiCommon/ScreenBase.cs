@@ -1,4 +1,4 @@
-namespace TuiPong;
+namespace TuiCommon;
 
 public abstract class ScreenBase {
     public abstract void UpdateScreenBounds();
@@ -19,8 +19,14 @@ public abstract class ScreenBase {
     protected internal (int y, int x) Center;
     
     private bool _started;
+    protected internal FrameCounter? FrameCounter { get; private set; }
+
+    protected internal void UseFrameCounter(int intervalMs = 1000) {
+        FrameCounter = null;
+        FrameCounter = new(intervalMs);
+    }
     
-    public void StartGame() {
+    public void StartScreen() {
         if (_started) return;
         _started = true;
 
@@ -89,42 +95,38 @@ public abstract class ScreenBase {
     }
 
     protected virtual void RenderIteration() {
+        FrameCounter?.PushNewFrame();
         UpdateScreenBounds();
         _application.Render();
         PushDisplay(ScreenText.ToStringBuilder(ScreenWidth, ScreenHeight));
     }
     
-    public void StopGame() => _started = false;
+    public void StopScreen() => _started = false;
 
     private string _currentInput;
     private Action<string>? currentTextCallback;
     private Action<string> finalString;
 
-    public void EnterInputLoop() {
-        while (true) {
-            try {
-                ConsoleKeyInfo keyInfo = Console.ReadKey(true); 
-                ConsoleKey key = keyInfo.Key;
-                if (key == ConsoleKey.Escape) break;
-                if (currentTextCallback != null) {
-                    if (key == ConsoleKey.Backspace) 
-                        currentTextCallback(_currentInput = _currentInput.Substring(0, _currentInput.Length - 1));
-                    if (key != ConsoleKey.Enter) {
-                        if (keyInfo.KeyChar == 32 || keyInfo.KeyChar >= 65 && keyInfo.KeyChar <= 122)
-                            currentTextCallback(_currentInput += keyInfo.KeyChar);
-                        continue;
-                    }
-                    finalString(_currentInput);
-                    currentTextCallback = null;
-                    _currentInput = "";
-                    continue;
-                }
-                _application.OnKeyReceived(keyInfo);
-            }
-            catch (Exception e) {
-                Console.WriteLine(e);
-            }
+    public void SendKey(TuiKey key) {
+        if (key.Key == "Escape") {
+            StopScreen();
+            return;
         }
+        
+        if (currentTextCallback != null) {
+            if (key.Key == "Backspace") 
+                currentTextCallback(_currentInput = _currentInput.Substring(0, _currentInput.Length - 1));
+            if (key.Key != "Enter") {
+                if (key.KeyChar == 32 || key.KeyChar >= 65 && key.KeyChar <= 122)
+                    currentTextCallback(_currentInput += key.KeyChar);
+                return;
+            }
+            finalString(_currentInput);
+            currentTextCallback = null;
+            _currentInput = "";
+            return;
+        }
+        _application.OnKeyReceived(key);
     }
 
     protected internal void GetUserInput(Action<string> currentTextCallback, Action<string> finalString) {

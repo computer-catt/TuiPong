@@ -1,4 +1,4 @@
-namespace TuiPong;
+namespace TuiCommon;
 
 public abstract class TuiApplication(ScreenBase screenBase) {
     protected ScreenBase Sb = screenBase;
@@ -7,5 +7,5 @@ public abstract class TuiApplication(ScreenBase screenBase) {
     protected internal abstract void Render();
     protected internal virtual void Update() {}
     
-    protected internal virtual void OnKeyReceived(ConsoleKeyInfo key) {}
+    protected internal virtual void OnKeyReceived(TuiKey key) {}
 }
