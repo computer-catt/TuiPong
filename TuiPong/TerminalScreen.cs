@@ -1,3 +1,5 @@
+using TuiCommon;
+
 namespace TuiPong;
 
 public class TerminalScreen : ScreenBase {
@@ -15,5 +17,18 @@ public class TerminalScreen : ScreenBase {
     public override void PushDisplay(object value) {
         Console.Write("\e[H");
         Console.Write(value);
+    }
+    
+    public void EnterInputLoop() {
+        while (true) {
+            try {
+                ConsoleKeyInfo keyInfo = Console.ReadKey(true);
+                TuiKey key = new(keyInfo);
+                SendKey(key);
+            }
+            catch (Exception e) {
+                Console.WriteLine(e);
+            }
+        }
     }
 }

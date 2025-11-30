@@ -1,6 +1,6 @@
-using static TuiPong.ScreenBase;
+using static TuiCommon.ScreenBase;
 
-namespace TuiPong;
+namespace TuiCommon.Applications;
 
 public class LottaTextTest(ScreenBase screenBase) : TuiApplication(screenBase) {
     private string _screenText = "";
@@ -23,7 +23,7 @@ public class LottaTextTest(ScreenBase screenBase) : TuiApplication(screenBase) {
         Sb.DrawString((0, Sb.ScreenHeight), "This text is in the bottom left", DrawMode.BottomLeft);
     }
     
-    protected internal override void OnKeyReceived(ConsoleKeyInfo keyInfo) {
+    protected internal void OnKeyReceived(ConsoleKeyInfo keyInfo) {
         ConsoleKey key = keyInfo.Key;
         switch (key) {
             case ConsoleKey.A:

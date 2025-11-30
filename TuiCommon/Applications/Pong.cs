@@ -1,10 +1,8 @@
 using System.Numerics;
 
-namespace TuiPong;
+namespace TuiCommon.Applications;
 
 public class Pong(ScreenBase screenBase) : TuiApplication(screenBase) {
-    private FrameCounter? _frameCounter;
-    
     Vector2 _ballPosition = new(-5, -5);
     Vector2 _ballVelocity = new(1, 0);
 
@@ -13,18 +11,13 @@ public class Pong(ScreenBase screenBase) : TuiApplication(screenBase) {
     private int _lPaddleY;
 
     protected internal override void Start() {
-        Sb.RefreshSpeed = 16;
-        _frameCounter = new();
-        _frameCounter.StartCounter(200);
+        Sb.UseFrameCounter(200);
     }
 
     private int ClampPaddleY(int position) => 
         Math.Clamp(position, (int)(-Sb.ScreenHeight / 2f + PaddleHeight / 2f + 1), (int)(Sb.ScreenHeight / 2f - PaddleHeight / 2f + 0.6f -1));
 
     protected internal override void Update() {
-        _rPaddleY = ClampPaddleY(_rPaddleY);
-        _lPaddleY = ClampPaddleY(_lPaddleY);
-        
         if (_ballPosition is { X: <= -3, Y: <= -3 }) 
             _ballPosition = new(Sb.ScreenWidth / 2f, Sb.ScreenHeight / 2f); // Runs once
         
@@ -46,8 +39,7 @@ public class Pong(ScreenBase screenBase) : TuiApplication(screenBase) {
     }
 
     protected internal override void Render() {
-        _frameCounter!.PushNewFrame();
-        Sb.DrawString((0,1), "TuiPong " + _frameCounter.GetFps());
+        Sb.DrawString((0,1), "TuiPong " + Sb.FrameCounter!.GetFps() + " " + Sb.FrameCounter!.GetFrames());
         
         for (int i = 0; i < Sb.ScreenHeight; i+=3)
             Sb.DrawChar(Sb.Center.x, i, '|');
@@ -77,27 +69,30 @@ public class Pong(ScreenBase screenBase) : TuiApplication(screenBase) {
         /*Console.ResetColor();*/
     }
 
-    public void RightPaddleUp() => _rPaddleY++;
-    public void RightPaddleDown() => _rPaddleY--;
+    public void RightPaddleUp() => _rPaddleY = ClampPaddleY(_rPaddleY++);
+    public void RightPaddleDown() => _rPaddleY = ClampPaddleY(_rPaddleY--);
     
-    public void LeftPaddleUp() => _lPaddleY++;
-    public void LeftPaddleDown() => _lPaddleY--;
+    public void LeftPaddleUp() => _lPaddleY = ClampPaddleY(_lPaddleY++);
+    public void LeftPaddleDown() => _lPaddleY = ClampPaddleY(_lPaddleY--);
 
 
-    protected internal override void OnKeyReceived(ConsoleKeyInfo keyInfo) {
-        ConsoleKey key = keyInfo.Key;
-        switch (key) {
-            case ConsoleKey.UpArrow:
+    protected internal override void OnKeyReceived(TuiKey key) {
+        switch (key.Key) {
+            case "ArrowUp":
+            case "UpArrow":
                 RightPaddleDown();
                 break;
-            case ConsoleKey.DownArrow:
+            case "ArrowDown":
+            case "DownArrow":
                 RightPaddleUp();
                 break;
                 
-            case ConsoleKey.W:
+            case "w":
+            case "W":
                 LeftPaddleDown();
                 break;
-            case ConsoleKey.S:
+            case "s":
+            case "S":
                 LeftPaddleUp();
                 break;
         }
