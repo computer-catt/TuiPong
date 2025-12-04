@@ -2,8 +2,14 @@ using TuiCommon;
 
 namespace TuiPong;
 
-public class TerminalScreen : ScreenBase {
-    public override void UpdateScreenBounds() {
+public class TerminalScreen(string[] args) : ScreenBase(args) {
+    protected override void ShowError(object e) {
+        Console.Clear();
+        Console.Error.WriteLine(e);
+        Console.ReadLine();
+    }
+
+    protected override void UpdateScreenBounds() {
         bool didChange = ScreenHeight != Console.BufferHeight || ScreenWidth != Console.BufferWidth;
         if (didChange) {
             ScreenWidth = Console.BufferWidth;
@@ -14,7 +20,7 @@ public class TerminalScreen : ScreenBase {
         else Array.Clear(ScreenText);
     }
 
-    public override void PushDisplay(object value) {
+    protected override void PushDisplay(object value) {
         Console.Write("\e[H");
         Console.Write(value);
     }

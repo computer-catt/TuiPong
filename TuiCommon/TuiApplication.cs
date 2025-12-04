@@ -5,7 +5,7 @@ public abstract class TuiApplication(ScreenBase screenBase) {
     
     protected internal virtual void Start() {}
     protected internal abstract void Render();
-    protected internal virtual void Update() {}
+    protected internal virtual void Tick() {}
     
     protected internal virtual void OnKeyReceived(TuiKey key) {}
 }
