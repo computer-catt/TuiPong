@@ -1,8 +1,54 @@
 namespace TuiCommon;
 
 public abstract class ScreenBase {
-    public abstract void UpdateScreenBounds();
-    public abstract void PushDisplay(object value);
+    protected ScreenBase(string[] args) {
+        // ReSharper disable StringLiteralTypo
+        string error = "";
+        foreach (string meowArg in args) {
+            string arg = meowArg.ToLower().Trim('-');
+            string[] splitArg = arg.Split(':');
+            string flag = splitArg[0].Trim();
+            string value = arg.Remove(0, flag.Length).TrimStart(':').Trim();
+            if (!int.TryParse(value, out int intValue)) intValue = -1;
+            
+            Console.WriteLine($"{flag}     |     {value}");
+            
+            switch (flag) {
+                case "manualscreenwrap":
+                    ManualScreenwrap = true;
+                    if (string.IsNullOrEmpty(value)) break;
+                    ManualScreenwrap = !value.IsNo();
+                    break;
+                case "renderspeed":
+                    if (intValue != -1) {
+                        _renderSpeedOverride = true;
+                        RenderSpeed = intValue;
+                    }
+                    else error += $"Cant parse {flag} integer\nProvided: {value}\n";
+                    break;
+                case "tickspeed":
+                    if (intValue != -1) {
+                        _tickSpeedOverride = true;
+                        TickSpeed = intValue;
+                    }
+                    else error += $"Cant parse {flag} integer\nProvided: {value}\n";
+                    break;
+                default:
+                    error += $"{flag} is not a valid flag.\n";
+                    break;
+            }
+        } 
+        // ReSharper restore StringLiteralTypo
+
+        if (!string.IsNullOrEmpty(error)) 
+            // ReSharper disable once VirtualMemberCallInConstructor
+            ShowError(error);
+    }
+    
+
+    protected abstract void ShowError(object e);
+    protected abstract void UpdateScreenBounds();
+    protected abstract void PushDisplay(object value);
     
     private TuiApplication _application;
     
@@ -14,8 +60,18 @@ public abstract class ScreenBase {
     protected internal int ScreenWidth;
     protected internal int ScreenHeight;
     protected internal char[] ScreenText = new char[1];
-    protected internal int RefreshSpeed = 16; // 60 FPS ish
-    protected internal int UpdateSpeed = 16; // 60 FPS ish
+
+    private readonly bool _renderSpeedOverride = false;
+    protected internal int RenderSpeed { get; private set; } = 16; // 60 FPS ish
+    protected internal void SetRenderSpeed(int speedMs) {
+        if (!_renderSpeedOverride) RenderSpeed = speedMs; }
+    
+    private readonly bool _tickSpeedOverride = false;
+    protected internal int TickSpeed { get; private set; } = 16; // 60 FPS ish
+    protected internal void SetTickSpeed(int speedMs) {
+        if (!_tickSpeedOverride) TickSpeed = speedMs; }
+    
+    protected internal bool ManualScreenwrap = false;
     protected internal (int y, int x) Center;
     
     private bool _started;
@@ -32,52 +88,49 @@ public abstract class ScreenBase {
 
         try {
             new Thread(RenderLoop).Start();
-            new Thread(UpdateLoop).Start();
+            new Thread(TickLoop).Start();
         }
         catch (PlatformNotSupportedException) {
-            _ = AsyncUpdateLoop();
             _ = AsyncRenderLoop();
+            _ = AsyncTickLoop();
         }
     }
 
-    private void UpdateLoop() {
+    private void TickLoop() {
         while (_started) {
             try {
-                if (ScreenWidth > 0 && ScreenHeight > 0) _application.Update();
-                Thread.Sleep(UpdateSpeed);
+                if (ScreenWidth > 0 && ScreenHeight > 0) _application.Tick();
+                Thread.Sleep(TickSpeed);
             }
             catch (Exception e) {
-                Console.WriteLine(e);
-                Thread.Sleep(UpdateSpeed * 50);
+                Console.Error.WriteLine(e);
+                Thread.Sleep(TickSpeed * 50);
             }
         }
     }
     
-    private async Task AsyncUpdateLoop() {
+    private async Task AsyncTickLoop() {
         while (_started) {
             try {
-                if (ScreenWidth > 0 && ScreenHeight > 0) _application.Update();
-                await Task.Delay(UpdateSpeed);
+                if (ScreenWidth > 0 && ScreenHeight > 0) _application.Tick();
+                await Task.Delay(TickSpeed);
             }
             catch (Exception e) {
-                Console.WriteLine(e);
-                await Task.Delay(UpdateSpeed * 50);
+                Console.Error.WriteLine(e);
+                await Task.Delay(TickSpeed * 50);
             }
         }
     }
-
-    public int ResolveCharPos(int x, int y) => y * ScreenWidth + x;
-    protected internal void DrawChar(int x, int y, char ch) => ScreenText[ResolveCharPos(x,y)] = ch;
     
     private void RenderLoop() {
         while (_started) {
             try {
                 RenderIteration();
-                Thread.Sleep(RefreshSpeed);
+                Thread.Sleep(RenderSpeed);
             }
             catch (Exception e) {
-                Console.WriteLine(e);
-                Thread.Sleep(RefreshSpeed * 50);
+                Console.Error.WriteLine(e);
+                Thread.Sleep(RenderSpeed * 50);
             }
         }
     }
@@ -85,11 +138,11 @@ public abstract class ScreenBase {
         while (_started) {
             try {
                 RenderIteration();
-                await Task.Delay(RefreshSpeed);
+                await Task.Delay(RenderSpeed);
             }
             catch (Exception e) {
-                Console.WriteLine(e);
-                await Task.Delay(RefreshSpeed * 50);
+                Console.Error.WriteLine(e);
+                await Task.Delay(RenderSpeed * 50);
             }
         }
     }
@@ -98,14 +151,16 @@ public abstract class ScreenBase {
         FrameCounter?.PushNewFrame();
         UpdateScreenBounds();
         _application.Render();
-        PushDisplay(ScreenText.ToStringBuilder(ScreenWidth, ScreenHeight));
+        PushDisplay(ManualScreenwrap ? 
+            ScreenText.ToStringBuilder(ScreenWidth, ScreenHeight) : 
+            ScreenText.ToStringBuilder());
     }
     
     public void StopScreen() => _started = false;
 
     private string _currentInput;
-    private Action<string>? currentTextCallback;
-    private Action<string> finalString;
+    private Action<string>? _currentTextCallback;
+    private Action<string> _finalString;
 
     public void SendKey(TuiKey key) {
         if (key.Key == "Escape") {
@@ -113,27 +168,39 @@ public abstract class ScreenBase {
             return;
         }
         
-        if (currentTextCallback != null) {
-            if (key.Key == "Backspace") 
-                currentTextCallback(_currentInput = _currentInput.Substring(0, _currentInput.Length - 1));
-            if (key.Key != "Enter") {
-                if (key.KeyChar == 32 || key.KeyChar >= 65 && key.KeyChar <= 122)
-                    currentTextCallback(_currentInput += key.KeyChar);
-                return;
-            }
-            finalString(_currentInput);
-            currentTextCallback = null;
-            _currentInput = "";
-            return;
-        }
+        if (ApplyUserInput(key)) return;
+        
         _application.OnKeyReceived(key);
     }
 
-    protected internal void GetUserInput(Action<string> currentTextCallback, Action<string> finalString) {
-        this.currentTextCallback = currentTextCallback;
-        this.finalString = finalString;
+    /// <returns>true if you should return early to avoid key passthrough.</returns>
+    private bool ApplyUserInput(TuiKey key) {
+        if (_currentTextCallback == null) return false;
+        if (key.Key == "Backspace") {
+            if (_currentInput.Length != 0) 
+                _currentTextCallback(_currentInput = _currentInput[..^1]);
+            return true;
+        }
+        
+        if (key.Key != "Enter") {
+            _currentTextCallback(_currentInput += key.KeyChar);
+            return true;
+        }
+        
+        _finalString(_currentInput);
+        _currentTextCallback = null;
+        _currentInput = "";
+        return true;
     }
-
+    
+    protected internal void GetUserInput(Action<string> currentTextCallback, Action<string> finalString) {
+        _currentTextCallback = currentTextCallback;
+        _finalString = finalString;
+    }
+    
+    public int ResolveCharPos(int x, int y) => y * ScreenWidth + x;
+    protected internal void DrawChar(int x, int y, char ch) => ScreenText[ResolveCharPos(x,y)] = ch;
+    
     private void ParseFullDrawString((int x, int y) pos, string text, DrawMode drawMode = DrawMode.Center) {
         string[] lines;
         string lineStr;

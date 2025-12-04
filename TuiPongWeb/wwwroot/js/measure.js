@@ -1,8 +1,7 @@
 const testSpan = document.createElement("span");
-testSpan.textContent = "MMMMMMM";
+testSpan.textContent = "MMMMMMMMMM"; // dont worry about it
 testSpan.style.position = "absolute";
 testSpan.style.visibility = "hidden";
-testSpan.style.fontFamily = "monospace";
 
 window.measureCharacter = () => {
     document.body.appendChild(testSpan);

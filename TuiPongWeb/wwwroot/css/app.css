@@ -97,4 +97,7 @@ body {
     margin: 0;
     padding: 0;
     overflow: hidden;
+    font-family: 'JetBrains Mono', "LXGW WenKai Mono TC", monospace, "Noto Sans Symbols 2";
+    /*font-family: "LXGW WenKai Mono TC", monospace;*/
+    font-weight: 400;
 }

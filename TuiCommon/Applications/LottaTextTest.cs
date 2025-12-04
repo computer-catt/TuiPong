@@ -5,11 +5,11 @@ namespace TuiCommon.Applications;
 public class LottaTextTest(ScreenBase screenBase) : TuiApplication(screenBase) {
     private string _screenText = "";
 
-    protected internal override void Start() => Sb.UpdateSpeed = 50;
+    protected internal override void Start() => Sb.SetTickSpeed(50);
 
     private int _revealedChar = 0;
     private string _revealedString = "";
-    protected internal override void Update() {
+    protected internal override void Tick() {
         if (_revealedChar >= _screenText.Length) return;
         _revealedChar++;
         _revealedString = _screenText.Substring(0, _revealedChar);
@@ -22,14 +22,9 @@ public class LottaTextTest(ScreenBase screenBase) : TuiApplication(screenBase) {
         Sb.DrawString((Sb.ScreenWidth, Sb.ScreenHeight), "This text is in the bottom right", DrawMode.BottomRight);
         Sb.DrawString((0, Sb.ScreenHeight), "This text is in the bottom left", DrawMode.BottomLeft);
     }
-    
-    protected internal void OnKeyReceived(ConsoleKeyInfo keyInfo) {
-        ConsoleKey key = keyInfo.Key;
-        switch (key) {
-            case ConsoleKey.A:
-                _screenText +=
-                    "This is a lot of text, it may even contain cats or peanuts, so be careful as you're eating it\nIm a cat writing a lot of text\nMeow mewoemwoemowemoewmoemowmoewmoewomweio keom we moewm owemoq mow emoew mow emo emowmowe moew mowemo";
-                break;
-        }
+
+    protected internal override void OnKeyReceived(TuiKey key) {
+        if (key.Key.ToLower() == "a") 
+            _screenText += "This is a lot of text, it may even contain cats or peanuts, so be careful as you're eating it\nIm a cat writing a lot of text\nMeow mewoemwoemowemoewmoemowmoewmoewomweio keom we moewm owemoq mow emoew mow emo emowmowe moew mowemo";       
     }
 }

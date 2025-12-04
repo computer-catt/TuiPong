@@ -17,7 +17,7 @@ public class Pong(ScreenBase screenBase) : TuiApplication(screenBase) {
     private int ClampPaddleY(int position) => 
         Math.Clamp(position, (int)(-Sb.ScreenHeight / 2f + PaddleHeight / 2f + 1), (int)(Sb.ScreenHeight / 2f - PaddleHeight / 2f + 0.6f -1));
 
-    protected internal override void Update() {
+    protected internal override void Tick() {
         if (_ballPosition is { X: <= -3, Y: <= -3 }) 
             _ballPosition = new(Sb.ScreenWidth / 2f, Sb.ScreenHeight / 2f); // Runs once
         
@@ -48,9 +48,9 @@ public class Pong(ScreenBase screenBase) : TuiApplication(screenBase) {
             Sb.DrawChar(Sb.ScreenWidth - 2, Sb.Center.y + i + _rPaddleY, '┃'); // Render paddle
         for (int i = -PaddleHeight/2; i < PaddleHeight/2; i++) 
             Sb.DrawChar(1, Sb.Center.y + i + _lPaddleY, '┃'); // Render paddle
-        
-        if (Extensions.IsInBounds(Sb.ScreenHeight, Sb.ScreenWidth, (int)_ballPosition.X, (int)_ballPosition.Y)) 
-            Sb.DrawChar((int)_ballPosition.X, (int)_ballPosition.Y, '⬤'); // Draw the ball while in bounds 
+
+        if (Extensions.IsInBounds(Sb.ScreenHeight, Sb.ScreenWidth, (int)_ballPosition.X, (int)_ballPosition.Y))
+            Sb.DrawChar((int)_ballPosition.X, (int)_ballPosition.Y, '⬤');/*'⬤');*/ // Draw the ball while in bounds 
 
         if (_ballPosition.X > Sb.ScreenWidth + 5 || _ballPosition.X < -5) { // Game over overlay
             /*Console.ForegroundColor = ConsoleColor.Red;*/
@@ -69,11 +69,11 @@ public class Pong(ScreenBase screenBase) : TuiApplication(screenBase) {
         /*Console.ResetColor();*/
     }
 
-    public void RightPaddleUp() => _rPaddleY = ClampPaddleY(_rPaddleY++);
-    public void RightPaddleDown() => _rPaddleY = ClampPaddleY(_rPaddleY--);
+    private void RightPaddleUp() => _rPaddleY = ClampPaddleY(_rPaddleY+1);
+    private void RightPaddleDown() => _rPaddleY = ClampPaddleY(_rPaddleY-1);
     
-    public void LeftPaddleUp() => _lPaddleY = ClampPaddleY(_lPaddleY++);
-    public void LeftPaddleDown() => _lPaddleY = ClampPaddleY(_lPaddleY--);
+    private void LeftPaddleUp() => _lPaddleY = ClampPaddleY(_lPaddleY+1);
+    private void LeftPaddleDown() => _lPaddleY = ClampPaddleY(_lPaddleY-1);
 
 
     protected internal override void OnKeyReceived(TuiKey key) {

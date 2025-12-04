@@ -50,4 +50,10 @@ public static class Extensions {
 
     public static bool IsInBounds<T>(this T[,] array, int x, int y) => 
         IsInBounds(array.GetLength(0), array.GetLength(1), x, y);
+
+    public static bool IsNo(this string str) =>
+        str.ToLower().Trim().Replace(" ", "") switch {
+            "false" or "notta" or "nope" or "nuhuh" or "negative" or "nop" or "no" or "nah" => true,
+            _ => false 
+        };
 }

@@ -19,22 +19,21 @@ public class Wtest(ScreenBase screenBase) : TuiApplication(screenBase) {
     public void MoveHorizontal(int meow) => _x += meow;
     public void MoveVertical(int meow) => _y += meow;
 
-    protected internal void OnKeyReceived(ConsoleKeyInfo keyInfo) {
-        ConsoleKey key = keyInfo.Key;
-        switch (key) {
-            case ConsoleKey.W:
+    protected internal override void OnKeyReceived(TuiKey key) {
+        switch (key.Key.ToLower()) {
+            case "w":
                 MoveVertical(-1);
                 break;
-            case ConsoleKey.S:
+            case "s":
                 MoveVertical(1);
                 break;
-            case ConsoleKey.A:
+            case "a":
                 MoveHorizontal(-1);
                 break;
-            case ConsoleKey.D:
+            case "d":
                 MoveHorizontal(1);
                 break;
-            case ConsoleKey.F:
+            case "f":
                 Sb.GetUserInput(text => _screenText = text, finalText => _finalScreenText = finalText);
                 break;
         }
