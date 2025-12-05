@@ -26,7 +26,7 @@ public class TerminalScreen(string[] args) : ScreenBase(args) {
     }
     
     public void EnterInputLoop() {
-        while (true) {
+        while (Running) {
             try {
                 ConsoleKeyInfo keyInfo = Console.ReadKey(true);
                 TuiKey key = new(keyInfo);
