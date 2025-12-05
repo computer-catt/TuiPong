@@ -33,6 +33,16 @@ public abstract class ScreenBase {
                     }
                     else error += $"Cant parse {flag} integer\nProvided: {value}\n";
                     break;
+                case "framecountondraw":
+                    _frameCountOnDraw = true;
+                    if (string.IsNullOrEmpty(value)) break;
+                    _frameCountOnDraw = !value.IsNo();
+                    break;
+                case "forcedisabledirtysystem":
+                    _forceDisableDirtySystem = true;
+                    if (string.IsNullOrEmpty(value)) break;
+                    _forceDisableDirtySystem = !value.IsNo();
+                    break;
                 default:
                     error += $"{flag} is not a valid flag.\n";
                     break;
@@ -54,6 +64,7 @@ public abstract class ScreenBase {
     
     public void SetApplication(TuiApplication application) {
         _application = application;
+        _isUsingDirtySystem = false;
         _application.Start();
     }
     
@@ -74,17 +85,27 @@ public abstract class ScreenBase {
     protected internal bool ManualScreenwrap = false;
     protected internal (int y, int x) Center;
     
-    private bool _started;
+    protected bool Running;
     protected internal FrameCounter? FrameCounter { get; private set; }
 
+    private bool _isUsingDirtySystem = false;
+
+    private bool _isDirty = false;
+    protected internal void SetDirty() => 
+        _isDirty = _isUsingDirtySystem = !_forceDisableDirtySystem;
+
+    private bool _frameCountOnDraw = false;
+
+    private readonly bool _forceDisableDirtySystem = false;
+    
     protected internal void UseFrameCounter(int intervalMs = 1000) {
         FrameCounter = null;
         FrameCounter = new(intervalMs);
     }
     
     public void StartScreen() {
-        if (_started) return;
-        _started = true;
+        if (Running) return;
+        Running = true;
 
         try {
             new Thread(RenderLoop).Start();
@@ -97,7 +118,7 @@ public abstract class ScreenBase {
     }
 
     private void TickLoop() {
-        while (_started) {
+        while (Running) {
             try {
                 if (ScreenWidth > 0 && ScreenHeight > 0) _application.Tick();
                 Thread.Sleep(TickSpeed);
@@ -110,7 +131,7 @@ public abstract class ScreenBase {
     }
     
     private async Task AsyncTickLoop() {
-        while (_started) {
+        while (Running) {
             try {
                 if (ScreenWidth > 0 && ScreenHeight > 0) _application.Tick();
                 await Task.Delay(TickSpeed);
@@ -123,9 +144,11 @@ public abstract class ScreenBase {
     }
     
     private void RenderLoop() {
-        while (_started) {
+        while (Running) {
             try {
-                RenderIteration();
+                if (!_frameCountOnDraw) FrameCounter?.PushNewFrame();
+                if (!_isUsingDirtySystem || _isDirty) RenderIteration();
+                _isDirty = false;
                 Thread.Sleep(RenderSpeed);
             }
             catch (Exception e) {
@@ -135,9 +158,11 @@ public abstract class ScreenBase {
         }
     }
     private async Task AsyncRenderLoop() {
-        while (_started) {
+        while (Running) {
             try {
-                RenderIteration();
+                if (!_frameCountOnDraw) FrameCounter?.PushNewFrame();
+                if (!_isUsingDirtySystem || _isDirty) RenderIteration();
+                _isDirty = false;
                 await Task.Delay(RenderSpeed);
             }
             catch (Exception e) {
@@ -148,7 +173,7 @@ public abstract class ScreenBase {
     }
 
     protected virtual void RenderIteration() {
-        FrameCounter?.PushNewFrame();
+        if (_frameCountOnDraw) FrameCounter?.PushNewFrame();
         UpdateScreenBounds();
         _application.Render();
         PushDisplay(ManualScreenwrap ? 
@@ -156,7 +181,7 @@ public abstract class ScreenBase {
             ScreenText.ToStringBuilder());
     }
     
-    public void StopScreen() => _started = false;
+    public void StopScreen() => Running = false;
 
     private string _currentInput;
     private Action<string>? _currentTextCallback;
