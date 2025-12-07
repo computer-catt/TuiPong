@@ -15,9 +15,11 @@ public class TerminalScreen(string[] args) : ScreenBase(args) {
             ScreenWidth = Console.BufferWidth;
             ScreenHeight = Console.BufferHeight;
             ScreenText = new char[ScreenHeight * ScreenWidth];
+            if (!ManualScreenwrap) Array.Fill(ScreenText, ' ');
             Center = (ScreenHeight / 2, ScreenWidth / 2);
         }
-        else Array.Clear(ScreenText);
+        else if (ManualScreenwrap) Array.Clear(ScreenText);
+        else Array.Fill(ScreenText, ' ');
     }
 
     protected override void PushDisplay(object value) {

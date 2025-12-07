@@ -178,7 +178,7 @@ public abstract class ScreenBase {
         _application.Render();
         PushDisplay(ManualScreenwrap ? 
             ScreenText.ToStringBuilder(ScreenWidth, ScreenHeight) : 
-            ScreenText.ToStringBuilder());
+            ScreenText);
     }
     
     public void StopScreen() => Running = false;
