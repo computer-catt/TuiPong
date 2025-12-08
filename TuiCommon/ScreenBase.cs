@@ -1,7 +1,7 @@
 namespace TuiCommon;
 
 public abstract class ScreenBase {
-    protected ScreenBase(string[] args) {
+    public void SetArgs(string[] args) {
         // ReSharper disable StringLiteralTypo
         string error = "";
         foreach (string meowArg in args) {
@@ -54,13 +54,12 @@ public abstract class ScreenBase {
             // ReSharper disable once VirtualMemberCallInConstructor
             ShowError(error);
     }
-    
 
     protected abstract void ShowError(object e);
     protected abstract void UpdateScreenBounds();
     protected abstract void PushDisplay(object value);
     
-    private TuiApplication _application;
+    private TuiApplication? _application;
     
     public void SetApplication(TuiApplication application) {
         _application = application;
@@ -72,12 +71,12 @@ public abstract class ScreenBase {
     protected internal int ScreenHeight;
     protected internal char[] ScreenText = new char[1];
 
-    private readonly bool _renderSpeedOverride = false;
+    private bool _renderSpeedOverride = false;
     protected internal int RenderSpeed { get; private set; } = 16; // 60 FPS ish
     protected internal void SetRenderSpeed(int speedMs) {
         if (!_renderSpeedOverride) RenderSpeed = speedMs; }
     
-    private readonly bool _tickSpeedOverride = false;
+    private bool _tickSpeedOverride = false;
     protected internal int TickSpeed { get; private set; } = 16; // 60 FPS ish
     protected internal void SetTickSpeed(int speedMs) {
         if (!_tickSpeedOverride) TickSpeed = speedMs; }
@@ -94,9 +93,11 @@ public abstract class ScreenBase {
     protected internal void SetDirty() => 
         _isDirty = _isUsingDirtySystem = !_forceDisableDirtySystem;
 
+    protected internal void SetDirtyOptional() => _isDirty = true;
+
     private bool _frameCountOnDraw = false;
 
-    private readonly bool _forceDisableDirtySystem = false;
+    private bool _forceDisableDirtySystem = false;
     
     protected internal void UseFrameCounter(int intervalMs = 1000) {
         FrameCounter = null;
@@ -120,7 +121,7 @@ public abstract class ScreenBase {
     private void TickLoop() {
         while (Running) {
             try {
-                if (ScreenWidth > 0 && ScreenHeight > 0) _application.Tick();
+                if (ScreenWidth > 0 && ScreenHeight > 0) _application?.Tick();
                 Thread.Sleep(TickSpeed);
             }
             catch (Exception e) {
@@ -133,7 +134,7 @@ public abstract class ScreenBase {
     private async Task AsyncTickLoop() {
         while (Running) {
             try {
-                if (ScreenWidth > 0 && ScreenHeight > 0) _application.Tick();
+                if (ScreenWidth > 0 && ScreenHeight > 0) _application?.Tick();
                 await Task.Delay(TickSpeed);
             }
             catch (Exception e) {
@@ -175,7 +176,7 @@ public abstract class ScreenBase {
     protected virtual void RenderIteration() {
         if (_frameCountOnDraw) FrameCounter?.PushNewFrame();
         UpdateScreenBounds();
-        _application.Render();
+        _application?.Render();
         PushDisplay(ManualScreenwrap ? 
             ScreenText.ToStringBuilder(ScreenWidth, ScreenHeight) : 
             ScreenText);
@@ -183,9 +184,9 @@ public abstract class ScreenBase {
     
     public void StopScreen() => Running = false;
 
-    private string _currentInput;
+    private string _currentInput = "";
     private Action<string>? _currentTextCallback;
-    private Action<string> _finalString;
+    private Action<string>? _finalString;
 
     public void SendKey(TuiKey key) {
         if (key.Key == "Escape") {
@@ -195,7 +196,7 @@ public abstract class ScreenBase {
         
         if (ApplyUserInput(key)) return;
         
-        _application.OnKeyReceived(key);
+        _application?.OnKeyReceived(key);
     }
 
     /// <returns>true if you should return early to avoid key passthrough.</returns>
@@ -212,7 +213,7 @@ public abstract class ScreenBase {
             return true;
         }
         
-        _finalString(_currentInput);
+        _finalString!(_currentInput);
         _currentTextCallback = null;
         _currentInput = "";
         return true;

@@ -1,8 +1,8 @@
 using TuiCommon;
 
-namespace TuiPong;
+namespace TuiCli;
 
-public class TerminalScreen(string[] args) : ScreenBase(args) {
+public class TerminalScreen : ScreenBase {
     protected override void ShowError(object e) {
         Console.Clear();
         Console.Error.WriteLine(e);
@@ -17,6 +17,7 @@ public class TerminalScreen(string[] args) : ScreenBase(args) {
             ScreenText = new char[ScreenHeight * ScreenWidth];
             if (!ManualScreenwrap) Array.Fill(ScreenText, ' ');
             Center = (ScreenHeight / 2, ScreenWidth / 2);
+            SetDirtyOptional(); // TODO: refactor TerminalScreen bound setting to happen outside the update loop
         }
         else if (ManualScreenwrap) Array.Clear(ScreenText);
         else Array.Fill(ScreenText, ' ');
@@ -24,7 +25,10 @@ public class TerminalScreen(string[] args) : ScreenBase(args) {
 
     protected override void PushDisplay(object value) {
         Console.Write("\e[H");
-        Console.Write(value);
+        if (value is char[] charArray)
+            Console.Write(charArray);
+        else
+            Console.WriteLine(value);
     }
     
     public void EnterInputLoop() {

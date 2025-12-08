@@ -1,8 +1,8 @@
 using TuiCommon;
 
-namespace TuiPongWeb;
+namespace TuiCli;
 
-public class SshScreen(string[] args) : ScreenBase(args) {
+public class SshScreen : ScreenBase {
     private Action<string>? _callback;
 
     public void SetCallback(Action<string> callback) => _callback = callback;
@@ -15,6 +15,7 @@ public class SshScreen(string[] args) : ScreenBase(args) {
         ScreenWidth = width;
         ScreenText = new char[ScreenHeight * ScreenWidth];
         Center = (ScreenHeight / 2, ScreenWidth / 2);
+        SetDirtyOptional();
     }
 
     protected override void UpdateScreenBounds() => Array.Clear(ScreenText);

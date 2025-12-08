@@ -44,7 +44,9 @@ public class Wtest(ScreenBase screenBase) : TuiApplication(screenBase) {
                 Sb.SetDirty();
                 break;
             case "f":
-                Sb.GetUserInput(text => _screenText = text, finalText => _finalScreenText = finalText);
+                Sb.GetUserInput(
+                            text => { _screenText = text; Sb.SetDirty(); }, 
+                            finalText => { _finalScreenText = finalText; Sb.SetDirty(); });
                 Sb.SetDirty();
                 break;
         }

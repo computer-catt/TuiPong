@@ -9,10 +9,11 @@ public class Pong(ScreenBase screenBase) : TuiApplication(screenBase) {
     private const int PaddleHeight = 5;
     private int _rPaddleY;
     private int _lPaddleY;
-
-    protected internal override void Start() {
-        Sb.UseFrameCounter(200);
-    }
+    private int _lScore;
+    private int _rScore;
+    private bool _outOfBounds;
+    
+    protected internal override void Start() => Sb.UseFrameCounter();
 
     private int ClampPaddleY(int position) => 
         Math.Clamp(position, (int)(-Sb.ScreenHeight / 2f + PaddleHeight / 2f + 1), (int)(Sb.ScreenHeight / 2f - PaddleHeight / 2f + 0.6f -1));
@@ -25,17 +26,26 @@ public class Pong(ScreenBase screenBase) : TuiApplication(screenBase) {
             _ballVelocity.Y = -_ballVelocity.Y; // Reflect from top and bottom with 1 line padding
 
         if (_ballPosition.Y < Sb.Center.y + PaddleHeight/2f + _lPaddleY && 
-            _ballPosition.Y > Sb.Center.y - PaddleHeight/2f + _lPaddleY - 1&&
+            _ballPosition.Y > Sb.Center.y - PaddleHeight/2f + _lPaddleY - 1 &&
             _ballPosition.X < 3 && _ballPosition.X > 1) // Reflect off paddle
-            _ballVelocity = Vector2.Normalize(new Vector2(6, -(_lPaddleY + Sb.Center.y - _ballPosition.Y)));
+            _ballVelocity = Vector2.Normalize(new (6, -(_lPaddleY + Sb.Center.y - _ballPosition.Y)));
         
         
         if (_ballPosition.Y < Sb.Center.y + PaddleHeight/2f + _rPaddleY && 
             _ballPosition.Y > Sb.Center.y - PaddleHeight/2f + _rPaddleY - 1&&
             _ballPosition.X > Sb.ScreenWidth - 4 && _ballPosition.X < Sb.ScreenWidth) // Reflect off paddle
-            _ballVelocity = Vector2.Normalize(new Vector2(-6, -(_rPaddleY + Sb.Center.y - _ballPosition.Y)));
+            _ballVelocity = Vector2.Normalize(new (-6, -(_rPaddleY + Sb.Center.y - _ballPosition.Y)));
         
         _ballPosition += _ballVelocity; // Apply physics
+
+        _outOfBounds = _ballPosition.X > Sb.ScreenWidth + 5 || _ballPosition.X < -5;
+        /*Console.ForegroundColor = ConsoleColor.Red;*/
+        
+        if (_ballPosition.X < Sb.ScreenWidth + 30 && _ballPosition.X > -30) return; // Reset
+        if (_ballPosition.X < Sb.ScreenWidth + 30) {_lScore++; _ballVelocity.X = Math.Abs(_ballVelocity.X);}
+        if (_ballPosition.X > -30) {_rScore++; _ballVelocity.X = -Math.Abs(_ballVelocity.X);}
+        _ballPosition = new (-5f, -5f);
+        /*Console.ResetColor();*/
     }
 
     protected internal override void Render() {
@@ -52,8 +62,7 @@ public class Pong(ScreenBase screenBase) : TuiApplication(screenBase) {
         if (Extensions.IsInBounds(Sb.ScreenHeight, Sb.ScreenWidth, (int)_ballPosition.X, (int)_ballPosition.Y))
             Sb.DrawChar((int)_ballPosition.X, (int)_ballPosition.Y, '⬤');/*'⬤');*/ // Draw the ball while in bounds 
 
-        if (_ballPosition.X > Sb.ScreenWidth + 5 || _ballPosition.X < -5) { // Game over overlay
-            /*Console.ForegroundColor = ConsoleColor.Red;*/
+        if (_outOfBounds) { // Game over overlay
             char[] letters = ['G','a','m','e',' ','o','v','e','r'];
             for (int i = 0; i < letters.Length; i++)
                 Sb.DrawChar(Sb.Center.x - letters.Length/2 + i, Sb.Center.y, letters[i]);
@@ -64,9 +73,8 @@ public class Pong(ScreenBase screenBase) : TuiApplication(screenBase) {
             Sb.DrawChar(i, Sb.ScreenHeight - 1, '─');
         }
         
-        if (_ballPosition.X < Sb.ScreenWidth + 30 && _ballPosition.X > -30) return; // Reset
-        _ballPosition = new (-5f, -5f);
-        /*Console.ResetColor();*/
+        Sb.DrawString((Sb.Center.x -4, 2), _rScore.ToString(), ScreenBase.DrawMode.TopRight);
+        Sb.DrawString((Sb.Center.x + 5, 2), _lScore.ToString());
     }
 
     private void RightPaddleUp() => _rPaddleY = ClampPaddleY(_rPaddleY+1);

@@ -1,10 +1,8 @@
 using TuiCommon;
 
-namespace TuiPongWeb;
+namespace TuiWeb;
 
-public class WebScreen(string[] args, Action<string> callback) : ScreenBase(args) {
-    private Action<string> _callback;
-    
+public class WebScreen(Action<string> callback) : ScreenBase {
     protected override void ShowError(object e) =>
         Console.Error.WriteLine(e);
     
@@ -13,8 +11,9 @@ public class WebScreen(string[] args, Action<string> callback) : ScreenBase(args
         ScreenWidth = width;
         ScreenText = new char[ScreenHeight * ScreenWidth];
         Center = (ScreenHeight / 2, ScreenWidth / 2);
+        SetDirtyOptional();
     }
 
     protected override void UpdateScreenBounds() => Array.Clear(ScreenText);
-    protected override void PushDisplay(object value) => callback(value.ToString());
+    protected override void PushDisplay(object value) => callback(value.ToString() ?? "Cant convert to string");
 }

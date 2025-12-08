@@ -1,6 +1,6 @@
 ﻿@inject IJSRuntime JavascriptRuntime
 @page "/"
-@inject NavigationManager navigationManager
+@inject NavigationManager NavigationManager
 @using TuiCommon
 @using TuiCommon.Applications
 
@@ -13,18 +13,20 @@
 @code {
     WebScreen? _webScreen;
     private string _screenText = "";
-    private PixelSize _characterSize;
+    private PixelSize? _characterSize;
     private int _horizontalCharacters;
     private int _verticalCharacters;
     
     protected override async void OnInitialized() {
         List<string> args = ["ManualScreenWrap"];
-        args.AddRange(new Uri(navigationManager.Uri).Query.TrimStart('?').Trim().Replace("%20", " ").Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        args.AddRange(new Uri(NavigationManager.Uri).Query.TrimStart('?').Trim().Replace("%20", " ").Split(' ', StringSplitOptions.RemoveEmptyEntries));
         
-        _webScreen = new WebScreen(args.ToArray(), s => {
+        _webScreen = new WebScreen(s => {
             _screenText = s;
             StateHasChanged();
         });
+        
+        _webScreen.SetArgs(args.ToArray());
         
         await UpdateSize();
         _webScreen.SetScreenBounds(_horizontalCharacters, _verticalCharacters);
