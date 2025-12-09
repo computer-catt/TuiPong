@@ -10,7 +10,7 @@ public class TuiKey {
         Key = consoleKeyInfo.Key.ToString();
     }
 
-    public TuiKey(string key, char character) {
+    public TuiKey(string key, char? character) {
         Key = key;
         KeyChar = character;
     }

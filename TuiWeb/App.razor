@@ -18,7 +18,7 @@
     private int _verticalCharacters;
     
     protected override async void OnInitialized() {
-        List<string> args = ["ManualScreenWrap"];
+        List<string> args = ["ManualScreenWrap", "DisableColors"];
         args.AddRange(new Uri(NavigationManager.Uri).Query.TrimStart('?').Trim().Replace("%20", " ").Split(' ', StringSplitOptions.RemoveEmptyEntries));
         
         _webScreen = new WebScreen(s => {

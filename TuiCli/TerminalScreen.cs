@@ -2,7 +2,7 @@ using TuiCommon;
 
 namespace TuiCli;
 
-public class TerminalScreen : ScreenBase {
+public class TerminalScreen : AnsiColorBase {
     protected override void ShowError(object e) {
         Console.Clear();
         Console.Error.WriteLine(e);
@@ -14,13 +14,20 @@ public class TerminalScreen : ScreenBase {
         if (didChange) {
             ScreenWidth = Console.BufferWidth;
             ScreenHeight = Console.BufferHeight;
-            ScreenText = new char[ScreenHeight * ScreenWidth];
+            int size = ScreenHeight * ScreenWidth;
+            ScreenText        = new char [size];
+            BackgroundColors  = new byte?[size];
+            ForegroundColors  = new byte?[size];
+            RefreshCharBuffer = new bool [size];
             if (!ManualScreenwrap) Array.Fill(ScreenText, ' ');
             Center = (ScreenHeight / 2, ScreenWidth / 2);
             SetDirtyOptional(); // TODO: refactor TerminalScreen bound setting to happen outside the update loop
         }
-        else if (ManualScreenwrap) Array.Clear(ScreenText);
-        else Array.Fill(ScreenText, ' ');
+        
+        if (ManualScreenwrap) 
+            ClearBuffers();
+        else 
+            ClearBuffers(true);
     }
 
     protected override void PushDisplay(object value) {
@@ -28,7 +35,7 @@ public class TerminalScreen : ScreenBase {
         if (value is char[] charArray)
             Console.Write(charArray);
         else
-            Console.WriteLine(value);
+            Console.Write(value);
     }
     
     public void EnterInputLoop() {

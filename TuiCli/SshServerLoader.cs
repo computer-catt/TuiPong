@@ -48,24 +48,39 @@ public static class SshServerLoader {
             case ConnectionService service: {
                 try {
                     SshScreen screen = new SshScreen();
+                    PtyArgs? ptyArgs = null;
                 service.CommandOpened += (_, e) => {
                     Console.WriteLine($"Channel {e.Channel.ServerChannelId} runs {e.ShellType}: \"{e.CommandText}\", client key SHA256:{e.AttachedUserAuthArgs.Fingerprint}.");
-                    e.Agreed = true;
                     if (e.ShellType is not "shell") {
-                        e.Channel.SendData(Encoding.UTF8.GetBytes($"\r\n\nSorry. {e.ShellType} is not supported.\r\n\n"));
+                        e.Channel.SendData(
+                            Encoding.UTF8.GetBytes(
+                                ptyArgs?.Terminal == "xterm-kitty" ? 
+                                "\r\n\nSorry. using ssh kitten is not supported, \n\r" +
+                                "Ssh with a real ssh client.\r\n\n" : 
+                                $"\r\n\nSorry. {e.ShellType} is not supported.\r\n\n"));
                         e.Channel.SendClose();
                         return;
                     }
+                    e.Agreed = true;
                     
+                    // e.Channel.SendData("\e[?1003h"u8.ToArray());
+                    /*e.Channel.SendData("\e[38:5:0m\e[48:5:255m"u8.ToArray());*/
+                    
+                    /*e.Channel.DataReceived += (o, bytes) => {
+                        string meow = "";
+                        foreach (var byted in bytes) meow += $"{byted} ";
+                        e.Channel.SendData(Encoding.UTF8.GetBytes($"{meow.Trim()}\n\r"));
+                    };*/
+
                     /*screen.SetArgs(e.CommandText.Split(' ', StringSplitOptions.RemoveEmptyEntries));*/
                     
                     screen.SetCallback(s => {
                         if (e.Channel.ClientClosed || e.Channel.ServerClosed) return;
                         e.Channel.SendData("\e[H"u8.ToArray());
-                        e.Channel.SendData(Encoding.UTF8.GetBytes(s));
+                        e.Channel.SendData(Encoding.UTF8.GetBytes(s.ToString()!));
                     });
 
-                    screen.SetApplication(new Wtest(screen));
+                    screen.SetApplication(new Pong(screen));
                     e.Channel.DataReceived += (_, bytes) => {
                         if (bytes.Length == 1 && bytes[0] is 3 or 27) {
                             e.Channel.SendData("\e[2J\e[H"u8.ToArray());
@@ -73,6 +88,9 @@ public static class SshServerLoader {
                             e.Channel.SendClose();
                             return;
                         }
+
+                        /*foreach (var byted in bytes) Console.Write($"{byted} ");
+                        Console.WriteLine();*/
                         
                         TuiKey[] keys = BytesToTuiKeys(bytes);
                         foreach (var key in keys) screen.SendKey(key);
@@ -83,11 +101,11 @@ public static class SshServerLoader {
                         Console.WriteLine($"Goodbye {e.AttachedUserAuthArgs.Username}");
                         screen.StopScreen();
                     };
-                    
+
                     Task.Run(screen.StartScreen);
                 };
                 service.EnvReceived += service_EnvReceived;
-                service.PtyReceived += (_, args) => screen.SetScreenBounds((int)args.WidthChars, (int)args.HeightRows);
+                service.PtyReceived += (_, args) => screen.SetScreenBounds((int)(ptyArgs = args).WidthChars, (int)args.HeightRows);
                 service.TcpForwardRequest += service_TcpForwardRequest;
                 service.WindowChange += (_, args) => screen.SetScreenBounds((int)args.WidthColumns, (int)args.HeightRows);
                 }
@@ -108,17 +126,15 @@ public static class SshServerLoader {
         Console.WriteLine("Received environment variable {0}:{1}", e.Name, e.Value);
 
     private static TuiKey[] BytesToTuiKeys(byte[] inputBytes) {
-        List<TuiKey> keys = new();
-        TuiKey? key;
+        List<TuiKey> keys = [];
         
         string inputString = Encoding.UTF8.GetString(inputBytes);
         string[] splitKeys = inputString.Split("\e");
+        
         foreach (var character in splitKeys[0])
             keys.Add(ParseTuiChar(character));
-
         for (int i = 1; i < splitKeys.Length; i++)
-            if ((key = ParseTuiEscSeq($"\e{splitKeys[i]}")) != null)
-                keys.Add(key);
+            keys.Add(ParseTuiEscSeq($"\e{splitKeys[i]}"));
 
         return keys.ToArray();
     }
@@ -131,11 +147,11 @@ public static class SshServerLoader {
         _ => new TuiKey(character.ToString(), character)
     };
 
-    private static TuiKey? ParseTuiEscSeq(string seq) => seq switch {
-        "\e[A" => new TuiKey("UpArrow", '\0'),
-        "\e[B" => new TuiKey("DownArrow", '\0'),
-        "\e[C" => new TuiKey("RightArrow", '\0'),
-        "\e[D" => new TuiKey("LeftArrow", '\0'),
-        _ => null
+    private static TuiKey ParseTuiEscSeq(string seq) => seq switch {
+        "\e[A" => new TuiKey("UpArrow", (char?)null),
+        "\e[B" => new TuiKey("DownArrow", (char?)null),
+        "\e[C" => new TuiKey("RightArrow", (char?)null),
+        "\e[D" => new TuiKey("LeftArrow", (char?)null),
+        _ => new TuiKey(seq, (char?)null)
     };
 }

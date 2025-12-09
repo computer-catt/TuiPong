@@ -4,7 +4,7 @@ namespace TuiCli;
 
 static class MainClass {
     public static void Main(string[] args) {
-        if (args.Length != 0 && args[0].ToLowerInvariant() is "sshinit" or "britishssh") 
+        if (args.Length != 0 && args[0].ToLowerInvariant() is "sshinit" or "briissh") 
             SshServerLoader.Init(args);
         
         else InitScreen(args);
@@ -16,7 +16,7 @@ static class MainClass {
         
         var screen = new TerminalScreen();
         screen.SetArgs(args);
-        screen.SetApplication(new Wtest(screen));
+        screen.SetApplication(new Pong(screen));
         screen.StartScreen();
         screen.EnterInputLoop();
         screen.StopScreen();

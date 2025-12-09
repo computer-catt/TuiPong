@@ -9,7 +9,11 @@ public class WebScreen(Action<string> callback) : ScreenBase {
     public void SetScreenBounds(int width, int height) {
         ScreenHeight = height;
         ScreenWidth = width;
-        ScreenText = new char[ScreenHeight * ScreenWidth];
+        int size = ScreenHeight * ScreenWidth;
+        ScreenText        = new char [size];
+        /*BackgroundColors  = new byte?[size];
+        ForegroundColors  = new byte?[size];
+        RefreshCharBuffer = new bool [size];*/
         Center = (ScreenHeight / 2, ScreenWidth / 2);
         SetDirtyOptional();
     }

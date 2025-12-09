@@ -49,6 +49,7 @@ public class Pong(ScreenBase screenBase) : TuiApplication(screenBase) {
     }
 
     protected internal override void Render() {
+        Sb.SetForegroundColor(0,0, 198); // pwety yurpul
         Sb.DrawString((0,1), "TuiPong " + Sb.FrameCounter!.GetFps() + " " + Sb.FrameCounter!.GetFrames());
         
         for (int i = 0; i < Sb.ScreenHeight; i+=3)

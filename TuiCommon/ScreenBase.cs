@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace TuiCommon;
 
 public abstract class ScreenBase {
@@ -20,18 +22,20 @@ public abstract class ScreenBase {
                     ManualScreenwrap = !value.IsNo();
                     break;
                 case "renderspeed":
-                    if (intValue != -1) {
-                        _renderSpeedOverride = true;
-                        RenderSpeed = intValue;
+                    if (intValue == -1) {
+                        error += $"Cant parse {flag} integer\nProvided: {value}\n";
+                        break;
                     }
-                    else error += $"Cant parse {flag} integer\nProvided: {value}\n";
+                    _renderSpeedOverride = true;
+                    RenderSpeed = intValue;
                     break;
                 case "tickspeed":
-                    if (intValue != -1) {
-                        _tickSpeedOverride = true;
-                        TickSpeed = intValue;
+                    if (intValue == -1) {
+                        error += $"Cant parse {flag} integer\nProvided: {value}\n";
+                        break;
                     }
-                    else error += $"Cant parse {flag} integer\nProvided: {value}\n";
+                    _tickSpeedOverride = true;
+                    TickSpeed = intValue;
                     break;
                 case "framecountondraw":
                     _frameCountOnDraw = true;
@@ -42,6 +46,11 @@ public abstract class ScreenBase {
                     _forceDisableDirtySystem = true;
                     if (string.IsNullOrEmpty(value)) break;
                     _forceDisableDirtySystem = !value.IsNo();
+                    break;
+                case "disablecolors":
+                    _disableColors = true;
+                    if (string.IsNullOrEmpty(value)) break;
+                    _disableColors = !value.IsNo();
                     break;
                 default:
                     error += $"{flag} is not a valid flag.\n";
@@ -70,7 +79,21 @@ public abstract class ScreenBase {
     protected internal int ScreenWidth;
     protected internal int ScreenHeight;
     protected internal char[] ScreenText = new char[1];
+    private bool _disableColors = false;
+    protected internal bool UsingColors = false;
+    protected internal byte?[] ForegroundColors = new byte?[1];
+    protected internal byte?[] BackgroundColors = new byte?[1];
+    protected internal bool[] RefreshCharBuffer = new bool[1];
 
+    protected void ClearBuffers(bool fill = false) {
+        if (fill) Array.Fill(ScreenText,' ');
+        else Array.Clear(ScreenText);
+        if (!UsingColors) return;
+        Array.Clear(ForegroundColors);
+        Array.Clear(BackgroundColors);
+        Array.Clear(RefreshCharBuffer);
+    }
+    
     private bool _renderSpeedOverride = false;
     protected internal int RenderSpeed { get; private set; } = 16; // 60 FPS ish
     protected internal void SetRenderSpeed(int speedMs) {
@@ -173,13 +196,18 @@ public abstract class ScreenBase {
         }
     }
 
+    protected virtual StringBuilder BuildManualWrapString() =>
+        ScreenText.ToStringBuilder(ScreenWidth, ScreenHeight);
+
+    protected virtual object BuildAutoWrapString() => ScreenText;
+    
     protected virtual void RenderIteration() {
         if (_frameCountOnDraw) FrameCounter?.PushNewFrame();
         UpdateScreenBounds();
         _application?.Render();
         PushDisplay(ManualScreenwrap ? 
-            ScreenText.ToStringBuilder(ScreenWidth, ScreenHeight) : 
-            ScreenText);
+            BuildManualWrapString(): 
+            BuildAutoWrapString());
     }
     
     public void StopScreen() => Running = false;
@@ -226,6 +254,24 @@ public abstract class ScreenBase {
     
     public int ResolveCharPos(int x, int y) => y * ScreenWidth + x;
     protected internal void DrawChar(int x, int y, char ch) => ScreenText[ResolveCharPos(x,y)] = ch;
+
+    protected internal void SetBackgroundColor(int x, int y, byte color) {
+        if (_disableColors) return;if (_disableColors) return;
+        UsingColors = true;
+        BackgroundColors[ResolveCharPos(x,y)] = color;
+    }
+
+    protected internal void SetForegroundColor(int x, int y, byte color) {
+        if (_disableColors) return;
+        UsingColors = true;
+        ForegroundColors[ResolveCharPos(x,y)] = color;
+    }
+
+    protected internal void ResetStyles(int x, int y) {
+        if (_disableColors) return;
+        UsingColors = true;
+        RefreshCharBuffer[ResolveCharPos(x,y)] = true;
+    }
     
     private void ParseFullDrawString((int x, int y) pos, string text, DrawMode drawMode = DrawMode.Center) {
         string[] lines;
