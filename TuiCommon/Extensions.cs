@@ -54,6 +54,6 @@ public static class Extensions {
     public static bool IsNo(this string str) =>
         str.ToLower().Trim().Replace(" ", "") switch {
             "false" or "notta" or "nope" or "nuhuh" or "negative" or "nop" or "no" or "nah" => true,
-            _ => false 
+            _ => false
         };
 }

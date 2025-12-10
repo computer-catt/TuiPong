@@ -80,12 +80,10 @@ public static class SshServerLoader {
                         e.Channel.SendData(Encoding.UTF8.GetBytes(s.ToString()!));
                     });
 
-                    screen.SetApplication(new Pong(screen));
+                    screen.SetApplication(new MainMenu(screen));
                     e.Channel.DataReceived += (_, bytes) => {
-                        if (bytes.Length == 1 && bytes[0] is 3 or 27) {
-                            e.Channel.SendData("\e[2J\e[H"u8.ToArray());
+                        if (bytes.Length == 1 && bytes[0] is 3) {
                             screen.StopScreen();
-                            e.Channel.SendClose();
                             return;
                         }
 
@@ -96,6 +94,11 @@ public static class SshServerLoader {
                         foreach (var key in keys) screen.SendKey(key);
                     };
 
+                    screen.Stopping += () => {
+                        e.Channel.SendData("\e[2J\e[H"u8.ToArray());
+                        e.Channel.SendClose();
+                    };
+                    
                     Console.WriteLine($"Welcome {e.AttachedUserAuthArgs.Username} onto the server!");
                     session.Disconnected += (_,_) => {
                         Console.WriteLine($"Goodbye {e.AttachedUserAuthArgs.Username}");
@@ -152,6 +155,7 @@ public static class SshServerLoader {
         "\e[B" => new TuiKey("DownArrow", (char?)null),
         "\e[C" => new TuiKey("RightArrow", (char?)null),
         "\e[D" => new TuiKey("LeftArrow", (char?)null),
+        "\e" => new TuiKey("Escape", (char?)null),
         _ => new TuiKey(seq, (char?)null)
     };
 }

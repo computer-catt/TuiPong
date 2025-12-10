@@ -9,22 +9,8 @@ public class TerminalScreen : AnsiColorBase {
         Console.ReadLine();
     }
 
-    protected override void UpdateScreenBounds() {
-        bool didChange = ScreenHeight != Console.BufferHeight || ScreenWidth != Console.BufferWidth;
-        if (didChange) {
-            ScreenWidth = Console.BufferWidth;
-            ScreenHeight = Console.BufferHeight;
-            int size = ScreenHeight * ScreenWidth;
-            ScreenText        = new char [size];
-            BackgroundColors  = new byte?[size];
-            ForegroundColors  = new byte?[size];
-            RefreshCharBuffer = new bool [size];
-            if (!ManualScreenwrap) Array.Fill(ScreenText, ' ');
-            Center = (ScreenHeight / 2, ScreenWidth / 2);
-            SetDirtyOptional(); // TODO: refactor TerminalScreen bound setting to happen outside the update loop
-        }
-        
-        if (ManualScreenwrap) 
+    protected override void ClearScreen() {
+        if (ManualScreenwrap)
             ClearBuffers();
         else 
             ClearBuffers(true);
@@ -48,6 +34,19 @@ public class TerminalScreen : AnsiColorBase {
             catch (Exception e) {
                 Console.WriteLine(e);
             }
+        }
+    }
+
+    public override void SetScreenBounds(int width, int height, bool colors = true) {
+        base.SetScreenBounds(width, height, colors);
+        if (!ManualScreenwrap) Array.Fill(ScreenText, ' ');
+    }
+
+    public async Task BoundUpdateLoop(int iterationDelay = 200) {
+        while (Running) {
+            if (ScreenHeight != Console.BufferHeight || ScreenWidth != Console.BufferWidth)
+                SetScreenBounds(Console.BufferWidth, Console.BufferHeight);
+            await Task.Delay(iterationDelay);
         }
     }
 }

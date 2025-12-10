@@ -39,17 +39,16 @@ public class Pong(ScreenBase screenBase) : TuiApplication(screenBase) {
         _ballPosition += _ballVelocity; // Apply physics
 
         _outOfBounds = _ballPosition.X > Sb.ScreenWidth + 5 || _ballPosition.X < -5;
-        /*Console.ForegroundColor = ConsoleColor.Red;*/
         
         if (_ballPosition.X < Sb.ScreenWidth + 30 && _ballPosition.X > -30) return; // Reset
         if (_ballPosition.X < Sb.ScreenWidth + 30) {_lScore++; _ballVelocity.X = Math.Abs(_ballVelocity.X);}
         if (_ballPosition.X > -30) {_rScore++; _ballVelocity.X = -Math.Abs(_ballVelocity.X);}
         _ballPosition = new (-5f, -5f);
-        /*Console.ResetColor();*/
     }
 
     protected internal override void Render() {
-        Sb.SetForegroundColor(0,0, 198); // pwety yurpul
+        if (_outOfBounds) Sb.SetForegroundColor(0,0,1);
+        else Sb.SetForegroundColor(0,0, 198); // pwety yurpul
         Sb.DrawString((0,1), "TuiPong " + Sb.FrameCounter!.GetFps() + " " + Sb.FrameCounter!.GetFrames());
         
         for (int i = 0; i < Sb.ScreenHeight; i+=3)

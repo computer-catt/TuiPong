@@ -30,7 +30,7 @@
         
         await UpdateSize();
         _webScreen.SetScreenBounds(_horizontalCharacters, _verticalCharacters);
-        TuiApplication game = new Pong(_webScreen);
+        TuiApplication game = new MainMenu(_webScreen);
         _webScreen.SetApplication(game);
         _webScreen.StartScreen();
         _ = ScreenCheckLoop();

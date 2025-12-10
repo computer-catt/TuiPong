@@ -16,8 +16,9 @@ static class MainClass {
         
         var screen = new TerminalScreen();
         screen.SetArgs(args);
-        screen.SetApplication(new Pong(screen));
+        screen.SetApplication(new MainMenu(screen));
         screen.StartScreen();
+        _ = screen.BoundUpdateLoop();
         screen.EnterInputLoop();
         screen.StopScreen();
         

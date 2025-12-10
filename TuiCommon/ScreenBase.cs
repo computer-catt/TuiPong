@@ -1,4 +1,5 @@
 using System.Text;
+using TuiCommon.Applications;
 
 namespace TuiCommon;
 
@@ -65,7 +66,7 @@ public abstract class ScreenBase {
     }
 
     protected abstract void ShowError(object e);
-    protected abstract void UpdateScreenBounds();
+    protected abstract void ClearScreen();
     protected abstract void PushDisplay(object value);
     
     private TuiApplication? _application;
@@ -78,6 +79,23 @@ public abstract class ScreenBase {
     
     protected internal int ScreenWidth;
     protected internal int ScreenHeight;
+    
+    public virtual void SetScreenBounds(int width, int height, bool colors = true) {
+        ScreenHeight = height;
+        ScreenWidth = width;
+        int size = ScreenHeight * ScreenWidth;
+        ScreenText        = new char [size];
+        if (colors) {
+            BackgroundColors  = new byte?[size];
+            ForegroundColors  = new byte?[size];
+            RefreshCharBuffer = new bool [size];    
+        }
+        
+        Center = (ScreenWidth / 2, ScreenHeight / 2);
+        SetDirtyOptional();
+        _application?.OnResize();
+    }
+    
     protected internal char[] ScreenText = new char[1];
     private bool _disableColors = false;
     protected internal bool UsingColors = false;
@@ -105,7 +123,7 @@ public abstract class ScreenBase {
         if (!_tickSpeedOverride) TickSpeed = speedMs; }
     
     protected internal bool ManualScreenwrap = false;
-    protected internal (int y, int x) Center;
+    protected internal (int x, int y) Center;
     
     protected bool Running;
     protected internal FrameCounter? FrameCounter { get; private set; }
@@ -203,14 +221,18 @@ public abstract class ScreenBase {
     
     protected virtual void RenderIteration() {
         if (_frameCountOnDraw) FrameCounter?.PushNewFrame();
-        UpdateScreenBounds();
+        ClearScreen();
         _application?.Render();
         PushDisplay(ManualScreenwrap ? 
             BuildManualWrapString(): 
             BuildAutoWrapString());
     }
-    
-    public void StopScreen() => Running = false;
+
+    public event Action? Stopping;
+    public void StopScreen() {
+        Stopping?.Invoke();
+        Running = false;
+    }
 
     private string _currentInput = "";
     private Action<string>? _currentTextCallback;
@@ -218,7 +240,7 @@ public abstract class ScreenBase {
 
     public void SendKey(TuiKey key) {
         if (key.Key == "Escape") {
-            StopScreen();
+            SetApplication(new MainMenu(this));
             return;
         }
         
