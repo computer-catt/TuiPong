@@ -5,7 +5,7 @@ namespace TuiCli;
 
 public abstract class AnsiColorBase : ScreenBase {
     protected override object BuildAutoWrapString() {
-        if (!UsingColors) return ScreenText;
+        if (!Settings.UsingColors) return ScreenText;
         int nonNullColors = 0;
         int colorChars = 0;
         byte? byted;

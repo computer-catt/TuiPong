@@ -44,8 +44,11 @@ public class TerminalScreen : AnsiColorBase {
 
     public async Task BoundUpdateLoop(int iterationDelay = 200) {
         while (Running) {
-            if (ScreenHeight != Console.BufferHeight || ScreenWidth != Console.BufferWidth)
-                SetScreenBounds(Console.BufferWidth, Console.BufferHeight);
+            try {
+                if (ScreenHeight != Console.BufferHeight || ScreenWidth != Console.BufferWidth)
+                    SetScreenBounds(Console.BufferWidth, Console.BufferHeight);
+            }
+            catch (Exception e) { Console.WriteLine(e); }
             await Task.Delay(iterationDelay);
         }
     }

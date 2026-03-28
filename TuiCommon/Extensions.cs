@@ -56,4 +56,21 @@ public static class Extensions {
             "false" or "notta" or "nope" or "nuhuh" or "negative" or "nop" or "no" or "nah" => true,
             _ => false
         };
+    
+    public static string TrimLines(this string input, int startLineIndex, int endLineIndex) {
+        string[] allLines = input.Split('\n');
+        if (endLineIndex < 0 || startLineIndex >= allLines.Length) return "";
+        int clampedStart = Math.Max(0, startLineIndex);
+        int clampedEnd = Math.Min(allLines.Length - 1, endLineIndex);
+        int leadingEmptyCount = clampedStart;
+        int trailingEmptyCount = allLines.Length - clampedEnd - 1;
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < leadingEmptyCount; i++) stringBuilder.Append('\n');
+        for (int i = clampedStart; i <= clampedEnd; i++) {
+            if (i > clampedStart) stringBuilder.Append('\n');
+            stringBuilder.Append(allLines[i]);
+        }
+        for (int i = 0; i < trailingEmptyCount; i++) stringBuilder.Append('\n');
+        return stringBuilder.ToString();
+    }
 }

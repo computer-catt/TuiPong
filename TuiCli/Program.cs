@@ -19,7 +19,7 @@ static class MainClass {
         screen.SetApplication(new MainMenu(screen));
         screen.StartScreen();
         _ = screen.BoundUpdateLoop();
-        screen.EnterInputLoop();
+        screen.EnterInputLoop(); // pauses execution
         screen.StopScreen();
         
         Cleanup();
@@ -28,5 +28,14 @@ static class MainClass {
     static void Cleanup() {
         Console.Clear();
         Console.CursorVisible = true;
+    }
+
+    static void WriteChars() {
+        for (int i = 0; i < char.MaxValue; i++)
+            try { Console.Write($"{(char)i}"); }
+            catch (Exception e)
+            { Console.WriteLine(e); }
+
+        Console.ReadLine();
     }
 }

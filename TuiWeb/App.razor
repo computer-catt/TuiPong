@@ -34,14 +34,19 @@
         _webScreen.SetApplication(game);
         _webScreen.StartScreen();
         _ = ScreenCheckLoop();
-
     }
 
     private async Task ScreenCheckLoop() {
+        int cacheWidth = 0, cacheHeight = 0;
         while (true) {
             await UpdateSize();
-            _webScreen?.SetScreenBounds(_horizontalCharacters, _verticalCharacters);
             await Task.Delay(100);
+            
+            if (cacheWidth == _horizontalCharacters && _verticalCharacters == cacheHeight) continue;
+            
+            cacheHeight = _verticalCharacters;
+            cacheWidth = _horizontalCharacters;
+            _webScreen?.SetScreenBounds(_horizontalCharacters, _verticalCharacters);
         }
     }
     

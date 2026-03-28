@@ -17,7 +17,7 @@ public class MainMenu(ScreenBase screenBase) : TuiApplication(screenBase) {
     
     protected internal override void Tick() {
         _uptimeCount++;
-        Sb.UsingColors = true;
+        /*Sb.UsingColors = true;*/ // todo    // 4 months later i have no idea if this is todo
         if (_uptimeCount <= _introDurationTicks) {
             float bgColor = 232f + _uptimeCount / (float)_introDurationTicks * 23f;
             _colorByte = (byte)bgColor;
@@ -32,6 +32,7 @@ public class MainMenu(ScreenBase screenBase) : TuiApplication(screenBase) {
             _MainMenuPositioned = true;
             OnResize();
         }
+
         if (_colorByte != null) Sb.SetForegroundColor(0,0, _colorByte.Value);
         int logoId = GetLogoId(Sb.ScreenWidth);/*Math.Clamp(Math.Min(Sb.ScreenHeight, Sb.ScreenWidth / 3) / 5, 0, LogoMipMaps.Length -1)*/;
         Sb.DrawString((Sb.Center.x, Sb.ScreenHeight /4), LogoMipMaps[logoId], ScreenBase.DrawMode.Center);
@@ -50,21 +51,25 @@ public class MainMenu(ScreenBase screenBase) : TuiApplication(screenBase) {
     }
 
     protected internal override void OnKeyReceived(TuiKey key) {
-        switch (key.Key) {
-            case "ArrowUp":
-            case "UpArrow":
+        switch (key.Key.ToLower()) {
+            case "arrowup":
+            case "uparrow":
                 _menuList.UpItem();
                 Sb.SetDirty();
                 break;
-            case "ArrowDown":
-            case "DownArrow":
+            case "arrowdown":
+            case "downarrow":
                 _menuList.DownItem();
                 Sb.SetDirty();
                 break;
-            case "Enter":
+            case "enter":
                 Sb.SetDirty();
                 _menuList.Activate();
                 break;
+            case "p":
+	            Sb.SetDirty();
+                Sb.SetApplication(new SrimpSpecial(Sb));
+	            break;
         }
     }
 
@@ -84,6 +89,7 @@ public class MainMenu(ScreenBase screenBase) : TuiApplication(screenBase) {
         42, // 5
         83, // 6
     ];
+    
     public readonly string[] LogoMipMaps = [
         // 0
         "TuiHub",

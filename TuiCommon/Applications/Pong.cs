@@ -46,6 +46,11 @@ public class Pong(ScreenBase screenBase) : TuiApplication(screenBase) {
         _ballPosition = new (-5f, -5f);
     }
 
+    protected internal override void OnResize() {
+        _rPaddleY = ClampPaddleY(_rPaddleY);
+        _lPaddleY = ClampPaddleY(_lPaddleY);
+    }
+
     protected internal override void Render() {
         if (_outOfBounds) Sb.SetForegroundColor(0,0,1);
         else Sb.SetForegroundColor(0,0, 198); // pwety yurpul

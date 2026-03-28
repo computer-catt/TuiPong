@@ -4,6 +4,7 @@ using TuiCommon.Applications;
 namespace TuiCommon;
 
 public abstract class ScreenBase {
+    private TuiAppSettings _defaultSettings = new();
     public void SetArgs(string[] args) {
         // ReSharper disable StringLiteralTypo
         string error = "";
@@ -28,7 +29,7 @@ public abstract class ScreenBase {
                         break;
                     }
                     _renderSpeedOverride = true;
-                    RenderSpeed = intValue;
+                    _defaultSettings.RenderSpeed = intValue;
                     break;
                 case "tickspeed":
                     if (intValue == -1) {
@@ -36,7 +37,7 @@ public abstract class ScreenBase {
                         break;
                     }
                     _tickSpeedOverride = true;
-                    TickSpeed = intValue;
+                    _defaultSettings.TickSpeed = intValue;
                     break;
                 case "framecountondraw":
                     _frameCountOnDraw = true;
@@ -70,10 +71,11 @@ public abstract class ScreenBase {
     protected abstract void PushDisplay(object value);
     
     private TuiApplication? _application;
+    public TuiAppSettings Settings /*{ get; private set; }*/ = new();
     
     public void SetApplication(TuiApplication application) {
         _application = application;
-        _isUsingDirtySystem = false;
+        Settings = _defaultSettings;
         _application.Start();
     }
     
@@ -98,7 +100,6 @@ public abstract class ScreenBase {
     
     protected internal char[] ScreenText = new char[1];
     private bool _disableColors = false;
-    protected internal bool UsingColors = false;
     protected internal byte?[] ForegroundColors = new byte?[1];
     protected internal byte?[] BackgroundColors = new byte?[1];
     protected internal bool[] RefreshCharBuffer = new bool[1];
@@ -106,21 +107,19 @@ public abstract class ScreenBase {
     protected void ClearBuffers(bool fill = false) {
         if (fill) Array.Fill(ScreenText,' ');
         else Array.Clear(ScreenText);
-        if (!UsingColors) return;
+        if (!Settings.UsingColors) return;
         Array.Clear(ForegroundColors);
         Array.Clear(BackgroundColors);
         Array.Clear(RefreshCharBuffer);
     }
     
     private bool _renderSpeedOverride = false;
-    protected internal int RenderSpeed { get; private set; } = 16; // 60 FPS ish
     protected internal void SetRenderSpeed(int speedMs) {
-        if (!_renderSpeedOverride) RenderSpeed = speedMs; }
+        if (!_renderSpeedOverride) Settings.RenderSpeed = speedMs; }
     
     private bool _tickSpeedOverride = false;
-    protected internal int TickSpeed { get; private set; } = 16; // 60 FPS ish
     protected internal void SetTickSpeed(int speedMs) {
-        if (!_tickSpeedOverride) TickSpeed = speedMs; }
+        if (!_tickSpeedOverride) Settings.TickSpeed = speedMs; }
     
     protected internal bool ManualScreenwrap = false;
     protected internal (int x, int y) Center;
@@ -128,11 +127,9 @@ public abstract class ScreenBase {
     protected bool Running;
     protected internal FrameCounter? FrameCounter { get; private set; }
 
-    private bool _isUsingDirtySystem = false;
-
     private bool _isDirty = false;
     protected internal void SetDirty() => 
-        _isDirty = _isUsingDirtySystem = !_forceDisableDirtySystem;
+        _isDirty = Settings.UsingDirtySystem = !_forceDisableDirtySystem;
 
     protected internal void SetDirtyOptional() => _isDirty = true;
 
@@ -163,11 +160,11 @@ public abstract class ScreenBase {
         while (Running) {
             try {
                 if (ScreenWidth > 0 && ScreenHeight > 0) _application?.Tick();
-                Thread.Sleep(TickSpeed);
+                Thread.Sleep(Settings.TickSpeed);
             }
             catch (Exception e) {
                 Console.Error.WriteLine(e);
-                Thread.Sleep(TickSpeed * 50);
+                Thread.Sleep(Settings.TickSpeed * 50);
             }
         }
     }
@@ -176,11 +173,11 @@ public abstract class ScreenBase {
         while (Running) {
             try {
                 if (ScreenWidth > 0 && ScreenHeight > 0) _application?.Tick();
-                await Task.Delay(TickSpeed);
+                await Task.Delay(Settings.TickSpeed);
             }
             catch (Exception e) {
                 Console.Error.WriteLine(e);
-                await Task.Delay(TickSpeed * 50);
+                await Task.Delay(Settings.TickSpeed * 50);
             }
         }
     }
@@ -189,13 +186,13 @@ public abstract class ScreenBase {
         while (Running) {
             try {
                 if (!_frameCountOnDraw) FrameCounter?.PushNewFrame();
-                if (!_isUsingDirtySystem || _isDirty) RenderIteration();
+                if (!Settings.UsingDirtySystem || _isDirty) RenderIteration();
                 _isDirty = false;
-                Thread.Sleep(RenderSpeed);
+                Thread.Sleep(Settings.RenderSpeed);
             }
             catch (Exception e) {
                 Console.Error.WriteLine(e);
-                Thread.Sleep(RenderSpeed * 50);
+                Thread.Sleep(Settings.RenderSpeed * 50);
             }
         }
     }
@@ -203,13 +200,13 @@ public abstract class ScreenBase {
         while (Running) {
             try {
                 if (!_frameCountOnDraw) FrameCounter?.PushNewFrame();
-                if (!_isUsingDirtySystem || _isDirty) RenderIteration();
+                if (!Settings.UsingDirtySystem || _isDirty) RenderIteration();
                 _isDirty = false;
-                await Task.Delay(RenderSpeed);
+                await Task.Delay(Settings.RenderSpeed);
             }
             catch (Exception e) {
                 Console.Error.WriteLine(e);
-                await Task.Delay(RenderSpeed * 50);
+                await Task.Delay(Settings.RenderSpeed * 50);
             }
         }
     }
@@ -279,19 +276,19 @@ public abstract class ScreenBase {
 
     protected internal void SetBackgroundColor(int x, int y, byte color) {
         if (_disableColors) return;if (_disableColors) return;
-        UsingColors = true;
+        Settings.UsingColors = true;
         BackgroundColors[ResolveCharPos(x,y)] = color;
     }
 
     protected internal void SetForegroundColor(int x, int y, byte color) {
         if (_disableColors) return;
-        UsingColors = true;
+        Settings.UsingColors = true;
         ForegroundColors[ResolveCharPos(x,y)] = color;
     }
 
     protected internal void ResetStyles(int x, int y) {
         if (_disableColors) return;
-        UsingColors = true;
+        Settings.UsingColors = true;
         RefreshCharBuffer[ResolveCharPos(x,y)] = true;
     }
     
@@ -320,7 +317,7 @@ public abstract class ScreenBase {
     private void ParseLessDrawString((int x, int y) pos, string text, DrawMode drawMode = DrawMode.TopLeft) {
         int y, x, charPos = 0, line = 0;
         for (int charI = 0; charI < text.Length; charI++) {
-            if (text[charI] == '\n') { line++; charPos = 0; }
+            if (text[charI] == '\n') { line++; charPos = 0; continue;}
 
             switch (drawMode) {
                 case DrawMode.TopLeft:
