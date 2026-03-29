@@ -7,7 +7,14 @@
         <Nullable>enable</Nullable>
         <LangVersion>default</LangVersion>
         <RootNamespace>TuiCli</RootNamespace>
+        
         <PublishTrimmed>true</PublishTrimmed>
+        <PublishAot>true</PublishAot>
+        <PublishSingleFile>true</PublishSingleFile>
+        <SelfContained>true</SelfContained>
+        <PublishReadyToRun>true</PublishReadyToRun>
+        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+        <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
     </PropertyGroup>
 
     <ItemGroup>

@@ -1,5 +1,5 @@
 This code is primarily written by other people, 
-but changes were made to accept no authentication.
+but changes were made to accept no authentication and aot.
 
 source:
 https://github.com/devtekve/FxSsh 

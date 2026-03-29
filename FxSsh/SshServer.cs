@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace FxSsh
@@ -13,6 +12,7 @@ namespace FxSsh
         private readonly object _lock = new();
         private readonly List<Session> _sessions = [];
         private readonly Dictionary<string, string> _hostKey = [];
+        private bool _noAuth = false;
         private bool _isDisposed;
         private bool _started;
         private TcpListener _listenser = null;
@@ -79,6 +79,8 @@ namespace FxSsh
             }
         }
 
+        public void SetNoAuth(bool enable) => _noAuth = enable;
+        
         public void AddHostKey(string type, string xml)
         {
             Contract.Requires(type != null);
@@ -112,7 +114,7 @@ namespace FxSsh
                 var socket = _listenser.EndAcceptSocket(ar);
                 Task.Run(() =>
                 {
-                    var session = new Session(socket, _hostKey, StartingInfo.ServerBanner);
+                    var session = new Session(socket, _hostKey, StartingInfo.ServerBanner, _noAuth);
                     session.Disconnected += (ss, ee) =>
                     {
                         lock (_lock) _sessions.Remove(session);

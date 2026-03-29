@@ -20,18 +20,28 @@ public static class SshServerLoader {
 
         var server = new SshServer(new StartingInfo(IPAddress.Any, 2223, "SSH-2.0-FxSsh"));
         server.AddHostKey("ecdsa-sha2-nistp521", ecdsap521Pem);
+        server.SetNoAuth(true);
         
         server.ConnectionAccepted += (sender, session) => {
             Console.WriteLine("Accepted a client.");
             session.ServiceRegistered += e_ServiceRegistered;
         };
 
+        server.ExceptionRaised += (sender, exception) => Console.Error.WriteLine(exception);
+        
         server.Start();
         Console.WriteLine($"SSH server started.\nRunning on {server.StartingInfo.LocalAddress}:{server.StartingInfo.Port} with the {server.StartingInfo.ServerBanner} banner");
         Task.Delay(-1).Wait();
     }
 
     private static void e_ServiceRegistered(object? sender, SshService e) {
+        try 
+        { RegisterService(sender, e); }
+        catch (Exception exception) 
+        { Console.WriteLine(exception); }
+    }
+
+    private static void RegisterService(object? sender, SshService e) {
         if (sender == null) {
             Console.WriteLine("Sender is null. ignoring.");
             return;
@@ -46,11 +56,11 @@ public static class SshServerLoader {
                 break;
             }
             case ConnectionService service: {
-                try {
-                    SshScreen screen = new SshScreen();
-                    PtyArgs? ptyArgs = null;
+                SshScreen screen = new SshScreen();
+                PtyArgs? ptyArgs = null;
                 service.CommandOpened += (_, e) => {
-                    Console.WriteLine($"Channel {e.Channel.ServerChannelId} runs {e.ShellType}: \"{e.CommandText}\", client key SHA256:{e.AttachedUserAuthArgs.Fingerprint}.");
+                    try {
+                        Console.WriteLine($"Channel {e.Channel.ServerChannelId} runs {e.ShellType}: \"{e.CommandText}\", client key SHA256:{e.AttachedUserAuthArgs.Fingerprint}.");
                     if (e.ShellType is not "shell") {
                         e.Channel.SendData(
                             Encoding.UTF8.GetBytes(
@@ -106,16 +116,15 @@ public static class SshServerLoader {
                     };
 
                     Task.Run(screen.StartScreen);
+                    }
+                    catch (Exception exception) {
+                        Console.WriteLine(exception);
+                    }
                 };
                 service.EnvReceived += service_EnvReceived;
                 service.PtyReceived += (_, args) => screen.SetScreenBounds((int)(ptyArgs = args).WidthChars, (int)args.HeightRows);
                 service.TcpForwardRequest += service_TcpForwardRequest;
                 service.WindowChange += (_, args) => screen.SetScreenBounds((int)args.WidthColumns, (int)args.HeightRows);
-                }
-                catch (Exception exception) {
-                    Console.WriteLine(exception);
-                    throw;
-                }
                 break;
             }
         }

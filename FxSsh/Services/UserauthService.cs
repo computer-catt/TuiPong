@@ -23,8 +23,20 @@ namespace FxSsh.Services
         internal void HandleMessageCore(UserAuthServiceMessage message)
         {
             Contract.Requires(message != null);
-
-            this.HandleMessage((dynamic)message);
+            switch (message) {
+                case PasswordRequestMessage m:
+                    HandleMessage(m);
+                    break;
+                case PublicKeyRequestMessage m:
+                    HandleMessage(m);
+                    break;
+                case RequestMessage m:
+                    HandleMessage(m);
+                    break;
+                default:
+                    Console.WriteLine/*throw new KeyNotFoundException*/($"The handler for this message({message.MessageType}) was not found");
+                    break;
+            }
         }
 
         private void HandleMessage(RequestMessage message)
@@ -40,6 +52,7 @@ namespace FxSsh.Services
                     HandleMessage(pswdMsg);
                     break;
                 case "none":
+                    if (!_session.NoAuth) goto default;
                     var args = new UserAuthArgs(_session, message.Username, null);
                     UserAuth?.Invoke(this, args);
                     _session.RegisterService(message.ServiceName, args);
